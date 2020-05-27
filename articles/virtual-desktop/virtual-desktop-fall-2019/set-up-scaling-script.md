@@ -35,7 +35,7 @@ You can use the scaling tool to:
 
 The scaling tool uses a combination of Azure Automation PowerShell runbooks, webhooks, and Azure Logic Apps to function. When the tool runs, Azure Logic Apps calls a webhook to start the Azure Automation runbook. The runbook then creates a job.
 
-During peak usage time, the job checks the current number of sessions and the VM capacity of the current running session host for each host pool. It uses this information to calculate if the running session host VMs can support existing sessions based on the *SessionThresholdPerCPU* parameter defined for the **createazurelogicapp.ps1** file. If the session host VMs can't support existing sessions, the job starts additional session host VMs in the host pool.
+During peak usage time, the job checks the current number of sessions and the VM capacity of the current running session host for each host pool. It uses this information to calculate if the running session host VMs can support existing sessions based on the *SessionThresholdPerCPU* parameter defined for the **CreateOrUpdateAzLogicApp.ps1** file. If the session host VMs can't support existing sessions, the job starts additional session host VMs in the host pool.
 
 >[!NOTE]
 >*SessionThresholdPerCPU* doesn't restrict the number of sessions on the VM. This parameter only determines when new VMs need to be started to load-balance the connections. To restrict the number of sessions, you need to follow the instructions [Set-RdsHostPool](/powershell/module/windowsvirtualdesktop/set-rdshostpool/) to configure the *MaxSessionLimit* parameter accordingly.
