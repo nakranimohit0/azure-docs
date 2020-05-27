@@ -73,7 +73,7 @@ If you have everything ready, then let's get started.
 
 First, you'll need an Azure Automation account to run the PowerShell runbook. Here's how to set up your account:
 
-1. Open Windows PowerShell as an administrator.
+1. Open Windows PowerShell as an administrator. //todo you don't need to run this as an admin, right ?
 2. Run the following cmdlet to sign in to your Azure Account.
 
      ```powershell
@@ -86,15 +86,25 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. He
 3. Run the following cmdlet to download the script for creating the Azure Automation account:
 
      ```powershell
-     Set-Location -Path "c:\temp"
-     $uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-scaling-script/createazureautomationaccount.ps1"
-     Invoke-WebRequest -Uri $uri -OutFile ".\createazureautomationaccount.ps1"
+     Set-Location -Path "C:\Temp"
+     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-scaling-script/CreateOrUpdateAzAutoAccount.ps1" # //note: 'master' can be replaced with custom branch if needed
+     Invoke-WebRequest -Uri $Uri -OutFile ".\CreateOrUpdateAzAutoAccount.ps1"
      ```
 
 4. Run the following cmdlet to execute the script and create the Azure Automation account:
 
      ```powershell
-     .\createazureautomationaccount.ps1 -SubscriptionID <azuresubscriptionid> -ResourceGroupName <resourcegroupname> -AutomationAccountName <name of automation account> -Location "Azure region for deployment"
+     $Params = @{
+          # "AADTenantId"         = "<Azure_Active_Directory_tenant_ID>"   # Optional. If not specified, it will use the current Azure context
+          "SubscriptionId"        = "<Azure_subscription_ID>"              # Optional. If not specified, it will use the current Azure context
+          "ResourceGroupName"     = "<Resource_group_name>"                # Optional. Default: "WVDAutoScaleResourceGroup"
+          "AutomationAccountName" = "<Automation_account_name>"            # Optional. Default: "WVDAutoScaleAutomationAccount"
+          "Location"              = "<Azure_region_for_deployment>"        # Optional. Default: "West US2"
+          # "WorkspaceName"       = "<Log_analytics_workspace_name>"       # Optional. If not specified, log analytics workspace will not be used
+          # "ArtifactsURI"        = "https://raw.githubusercontent.com/Azure/RDS-Templates/<custom_branch>/wvd-templates/wvd-scaling-script" # Optional. Default: "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-scaling-script"
+     }
+
+     .\CreateOrUpdateAzAutoAccount.ps1 @Params
      ```
 
 5. The cmdlet's output will include a webhook URI. Make sure to keep a record of the URI because you'll use it as a parameter when you set up the execution schedule for the Azure Logic apps.
@@ -149,7 +159,7 @@ New-RdsRoleAssignment -RoleDefinitionName "RDS Contributor" -ApplicationId <appl
 
 Finally, you'll need to create the Azure Logic App and set up an execution schedule for your new scaling tool.
 
-1.  Open Windows PowerShell as an Administrator
+1.  Open Windows PowerShell as an Administrator. //todo you don't need to run this as an admin, right ?
 
 2.  Run the following cmdlet to sign in to your Azure Account.
 
@@ -160,9 +170,9 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 3. Run the following cmdlet to download the createazurelogicapp.ps1 script file on your local machine.
 
      ```powershell
-     Set-Location -Path "c:\temp"
-     $uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-scaling-script/createazurelogicapp.ps1"
-     Invoke-WebRequest -Uri $uri -OutFile ".\createazurelogicapp.ps1"
+     Set-Location -Path "C:\Temp"
+     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-scaling-script/CreateOrUpdateAzLogicApp.ps1" # //note: 'master' can be replaced with custom branch if needed
+     Invoke-WebRequest -Uri $Uri -OutFile ".\CreateOrUpdateAzLogicApp.ps1"
      ```
 
 4. Run the following cmdlet to sign into Windows Virtual Desktop with an account that has RDS Owner or RDS Contributor permissions.
@@ -171,7 +181,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      Add-RdsAccount -DeploymentUrl "https://rdbroker.wvd.microsoft.com"
      ```
 
-5. Run the following PowerShell script to create the Azure Logic app and execution schedule.
+5. Run the following PowerShell script to create the Azure Logic app and execution schedule for your host pool (Note: You will need to run this for each of the host pool you want to auto scale).
 
      ```powershell
      $aadTenantId = (Get-AzContext).Tenant.Id
@@ -186,6 +196,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      
      $wvdTenant = Get-RdsTenant | Out-GridView -PassThru -Title "Select your WVD tenant"
      $tenantName = $wvdTenant.TenantName
+     $tenantGroupName = $wvdTenant.TenantGroupName
      
      $wvdHostpool = Get-RdsHostPool -TenantName $wvdTenant.TenantName | Out-GridView -PassThru -Title "Select the host pool you'd like to scale"
      $hostPoolName = $wvdHostpool.HostPoolName
@@ -205,28 +216,36 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $automationAccountConnection = Get-AzAutomationConnection -ResourceGroupName $resourceGroup.ResourceGroupName -AutomationAccountName $automationAccount.AutomationAccountName | Out-GridView -PassThru -Title "Select the Azure RunAs connection asset"
      $connectionAssetName = $automationAccountConnection.Name
      
-     $webHookURI = Read-Host -Prompt "Enter the URI of the WebHook returned by when you created the Azure Automation Account"
+     $WebhookURI = Read-Host -Prompt "Enter the URI of the WebHook returned by when you created the Azure Automation Account"
      $maintenanceTagName = Read-Host -Prompt "Enter the name of the Tag associated with VMs you don't want to be managed by this scaling tool"
 
-     .\createazurelogicapp.ps1 -ResourceGroupName $resourceGroupName `
-       -AADTenantID $aadTenantId `
-       -SubscriptionID $subscriptionId `
-       -TenantName $tenantName `
-       -HostPoolName $hostPoolName `
-       -RecurrenceInterval $recurrenceInterval `
-       -BeginPeakTime $beginPeakTime `
-       -EndPeakTime $endPeakTime `
-       -TimeDifference $timeDifference `
-       -SessionThresholdPerCPU $sessionThresholdPerCPU `
-       -MinimumNumberOfRDSH $minimumNumberOfRdsh `
-       -LimitSecondsToForceLogOffUser $limitSecondsToForceLogOffUser `
-       -LogOffMessageTitle $logOffMessageTitle `
-       -LogOffMessageBody $logOffMessageBody `
-       -Location $location `
-       -ConnectionAssetName $connectionAssetName `
-       -WebHookURI $webHookURI `
-       -AutomationAccountName $automationAccountName `
-       -MaintenanceTagName $maintenanceTagName
+     $Params = @{
+          "AADTenantId"                   = $aadTenantId                             # Optional. If not specified, it will use the current Azure context
+          "SubscriptionID"                = $subscriptionId                          # Optional. If not specified, it will use the current Azure context
+          "ResourceGroupName"             = $resourceGroupName                       # Optional. Default: "WVDAutoScaleResourceGroup"
+          "Location"                      = $location                                # Optional. Default: "West US2"
+          # "RDBrokerURL"                 = "https://rdbroker.wvd.microsoft.com"     # Optional. Default: "https://rdbroker.wvd.microsoft.com"
+          "TenantGroupName"               = $tenantGroupName                         # Optional. Default: "Default Tenant Group"
+          "TenantName"                    = $tenantName
+          "HostPoolName"                  = $hostPoolName
+          # "LogAnalyticsWorkspaceId"     = "<Log_analytics_workspace_ID>"           # Optional. If not specified, script will not log to the log analytics workspace
+          # "LogAnalyticsPrimaryKey"      = "<Log_analytics_primary_key>"            # Optional. If not specified, script will not log to the log analytics workspace
+          "ConnectionAssetName"           = $connectionAssetName                     # Optional. Default: "AzureRunAsConnection"
+          "RecurrenceInterval"            = $recurrenceInterval                      # Optional. Default: 15
+          "BeginPeakTime"                 = $beginPeakTime                           # Optional. Default: "09:00"
+          "EndPeakTime"                   = $endPeakTime                             # Optional. Default: "17:00"
+          "TimeDifference"                = $timeDifference                          # Optional. Default: "-7:00"
+          "SessionThresholdPerCPU"        = $sessionThresholdPerCPU                  # Optional. Default: 1
+          "MinimumNumberOfRDSH"           = $minimumNumberOfRdsh                     # Optional. Default: 1
+          "MaintenanceTagName"            = $maintenanceTagName                      # Optional.
+          "LimitSecondsToForceLogOffUser" = $limitSecondsToForceLogOffUser           # Optional. Default: 1
+          "LogOffMessageTitle"            = $logOffMessageTitle                      # Optional. Default: "Machine is about to shutdown."
+          "LogOffMessageBody"             = $logOffMessageBody                       # Optional. Default: "Your session will be logged off. Please save and close everything."
+          "WebhookURI"                    = $WebhookURI
+          # "ArtifactsURI"                = "https://raw.githubusercontent.com/Azure/RDS-Templates/<custom_branch>/wvd-templates/wvd-scaling-script" # Optional. Default: "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-scaling-script"
+     }
+
+     .\CreateOrUpdateAzLogicApp.ps1 @Params
      ```
 
      After you run the script, the Logic App should appear in a resource group, as shown in the following image.
