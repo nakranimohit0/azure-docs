@@ -149,7 +149,7 @@ Add-RdsAccount -DeploymentUrl "https://rdbroker.wvd.microsoft.com"
 Get-RdsTenant
 ```
 
-When you find the tenant with the host pools you want to scale, follow the instructions in [Create an Azure Automation account](#create-an-azure-automation-account) and use the tenant name you got from the previous cmdlet in the following cmdlet to create the role assignment:
+When you find the tenant with the host pools you want to scale, follow the instructions in [Create an Azure Automation account](#create-an-azure-automation-account) to gather the AzureRunAsConnection ApplicationID and use the WVD tenant name you got from the previous cmdlet in the following cmdlet to create the role assignment:
 
 ```powershell
 New-RdsRoleAssignment -RoleDefinitionName "RDS Contributor" -ApplicationId <applicationid> -TenantName <tenantname>
