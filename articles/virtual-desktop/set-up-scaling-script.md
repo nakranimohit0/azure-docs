@@ -18,7 +18,7 @@ In this article, you'll learn about the scaling tool built with Azure Automation
 
 ## Report issues
 
-Issue reports for the scaling tool are currently being handled on GitHub instead of Microsoft Support. If you encounter any issues with the scaling tool, you can report them bu opening a GitHub issue labeled "4a-WVD-scaling-logicapps" on the [RDS GitHub page](https://github.com/Azure/RDS-Templates/issues?q=is%3Aissue+is%3Aopen+label%3A4a-WVD-scaling-logicapps).
+Issue reports for the scaling tool are currently being handled on GitHub instead of Microsoft Support. If you encounter any issues with the scaling tool, you can report them by opening a GitHub issue labeled "4a-WVD-scaling-logicapps" on the [RDS GitHub page](https://github.com/Azure/RDS-Templates/issues?q=is%3Aissue+is%3Aopen+label%3A4a-WVD-scaling-logicapps).
 
 ## How the scaling tool works
 
@@ -45,7 +45,7 @@ The job runs periodically based on a set recurrence interval. You can change thi
 
 However, the tool also has the following limitations:
 
-- This solution applies only to pooled session host VMs.
+- This solution applies only to pooled multi-session session host VMs.
 - This solution manages VMs in any region, but can only be used in the same subscription as your Azure Automation account and Azure Logic Apps.
 
 >[!NOTE]
@@ -55,7 +55,7 @@ However, the tool also has the following limitations:
 
 Before you start setting up the scaling tool, make sure you have the following things ready:
 
-- A [Windows Virtual Desktop tenant and host pool](create-host-pools-arm-template.md)
+- A [Windows Virtual Desktop host pool](create-host-pools-arm-template.md)
 - Session host pool VMs configured and registered with the Windows Virtual Desktop service
 - A user with [Contributor access](../../role-based-access-control/role-assignments-portal.md) on Azure subscription
 
@@ -133,7 +133,7 @@ To create a Run As account in your Azure account:
 
 5. Wait a few minutes for Azure to create the Run As account. You can track the creation progress in the menu under Notifications.
 
-6. When the process finishes, it will create an asset named AzureRunAsConnection in the specified Automation account. The connection asset holds the application ID, tenant ID, subscription ID, and certificate thumbprint. Remember the application ID, because you'll use it later.
+6. When the process finishes, it will create an asset named AzureRunAsConnection in the specified Automation account.
 
 ## Create the Azure Logic App and execution schedule
 
@@ -168,8 +168,6 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $resourceGroupName = $resourceGroup.ResourceGroupName
      $location = $resourceGroup.Location
      
-     # //todo get resource group name of the host pool
-     # //todo use new az mod from here on
      $wvdHostpool = Get-AzWvdHostPool | Out-GridView -PassThru -Title "Select the host pool you'd like to scale"
      $hostPoolName = $wvdHostpool.HostPoolName
      $hostPoolResourceGroupName = (Get-AzResource -ResourceId $wvdHostpool.Id).ResourceGroupName
@@ -180,7 +178,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $timeDifference = Read-Host -Prompt "Enter the time difference between local time and UTC in hours, e.g. +5:30"
      $sessionThresholdPerCPU = Read-Host -Prompt "Enter the maximum number of sessions per CPU that will be used as a threshold to determine when new session host VMs need to be started during peak hours"
      $minimumNumberOfRdsh = Read-Host -Prompt "Enter the minimum number of session host VMs to keep running during off-peak hours"
-     $limitSecondsToForceLogOffUser = Read-Host -Prompt "Enter the number of seconds to wait before automatically signing out users. If set to 0, users will be signed out immediately"
+     $limitSecondsToForceLogOffUser = Read-Host -Prompt "Enter the number of seconds to wait before automatically signing out users. If set to 0, any session host VM that has user sessions, will be left untouched"
      $logOffMessageTitle = Read-Host -Prompt "Enter the title of the message sent to the user before they are forced to sign out"
      $logOffMessageBody = Read-Host -Prompt "Enter the body of the message sent to the user before they are forced to sign out"
      
