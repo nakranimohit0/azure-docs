@@ -169,7 +169,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $location = $resourceGroup.Location
      
      $wvdHostpool = Get-AzWvdHostPool | Out-GridView -PassThru -Title "Select the host pool you'd like to scale"
-     $hostPoolName = $wvdHostpool.HostPoolName
+     $hostPoolName = $wvdHostpool.Name
      $hostPoolResourceGroupName = (Get-AzResource -ResourceId $wvdHostpool.Id).ResourceGroupName
      
      $recurrenceInterval = Read-Host -Prompt "Enter how often you'd like the job to run in minutes, e.g. '15'"
@@ -182,7 +182,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $logOffMessageTitle = Read-Host -Prompt "Enter the title of the message sent to the user before they are forced to sign out"
      $logOffMessageBody = Read-Host -Prompt "Enter the body of the message sent to the user before they are forced to sign out"
      
-     $automationAccount = Get-AzAutomationAccount -ResourceGroupName $resourceGroup.ResourceGroupName | Out-GridView -PassThru
+     $automationAccount = Get-AzAutomationAccount -ResourceGroupName $resourceGroup.ResourceGroupName | Out-GridView -PassThru -Title "Select the Azure Automation account"
      $automationAccountName = $automationAccount.AutomationAccountName
      $automationAccountConnection = Get-AzAutomationConnection -ResourceGroupName $resourceGroup.ResourceGroupName -AutomationAccountName $automationAccount.AutomationAccountName | Out-GridView -PassThru -Title "Select the Azure RunAs connection asset"
      $connectionAssetName = $automationAccountConnection.Name
