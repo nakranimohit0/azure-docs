@@ -103,7 +103,6 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. Be
           "AutomationAccountName" = "<Automation_account_name>"            # Optional. Default: "WVDAutoScaleAutomationAccount"
           "Location"              = "<Azure_region_for_deployment>"        # Optional. Default: "West US2"
           "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. If not specified, log analytics workspace will not be used
-          "ArtifactsURI"          = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script"
      }
 
      .\CreateOrUpdateAzAutoAccount.ps1 @Params
@@ -217,7 +216,6 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
           "LogOffMessageTitle"            = $logOffMessageTitle                      # Optional. Default: "Machine is about to shutdown."
           "LogOffMessageBody"             = $logOffMessageBody                       # Optional. Default: "Your session will be logged off. Please save and close everything."
           "WebhookURI"                    = $WebhookURI
-          "ArtifactsURI"                  = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script"
      }
 
      .\CreateOrUpdateAzLogicApp.ps1 @Params
