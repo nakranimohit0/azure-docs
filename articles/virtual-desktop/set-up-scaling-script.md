@@ -55,9 +55,9 @@ However, the tool also has the following limitations:
 
 Before you start setting up the scaling tool, make sure you have the following things ready:
 
-- A [Windows Virtual Desktop host pool](create-host-pools-arm-template.md)
+- A [Windows Virtual Desktop host pool](create-host-pools-azure-marketplace.md)
 - Session host pool VMs configured and registered with the Windows Virtual Desktop service
-- A user with [Contributor access](../../role-based-access-control/role-assignments-portal.md) on Azure subscription
+- A user with [Contributor access](../role-based-access-control/role-assignments-portal.md) on Azure subscription
 
 The machine you use to deploy the tool must have: 
 
@@ -110,7 +110,8 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. He
 
 6. After you've set up your Azure Automation account, sign in to your Azure subscription and check to make sure your Azure Automation account and the relevant runbook have appeared in your specified resource group, as shown in the following image:
 
-![An image of the Azure overview page showing the newly created automation account and runbook.](../media/automation-account.png)
+//todo need to update the image as the runbook for ARM based scaling tool is different "WVDAutoScaleRunbookARMBased"
+![An image of the Azure overview page showing the newly created automation account and runbook.](media/automation-account.png)
 
   To check if your webhook is where it should be, select the name of your runbook. Next, go to your runbook's Resources section and select **Webhooks**.
 
@@ -118,7 +119,7 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. He
 
 Now that you have an Azure Automation account, you'll also need to create an Azure Automation Run As account to access your Azure resources.
 
-An [Azure Automation Run As account](../../automation/manage-runas-account.md) provides authentication for managing resources in Azure with the Azure cmdlets. When you create a Run As account, it creates a new service principal user in Azure Active Directory and assigns the Contributor role to the service principal user at the subscription level, the Azure Run As Account is a great way to authenticate securely with certificates and a service principal name without needing to store a username and password in a credential object. To learn more about Run As authentication, see [Limit Run As account permissions](../../automation/manage-runas-account.md#limit-run-as-account-permissions).
+An [Azure Automation Run As account](../automation/manage-runas-account.md) provides authentication for managing resources in Azure with the Azure cmdlets. When you create a Run As account, it creates a new service principal user in Azure Active Directory and assigns the Contributor role to the service principal user at the subscription level, the Azure Run As Account is a great way to authenticate securely with certificates and a service principal name without needing to store a username and password in a credential object. To learn more about Run As authentication, see [Limit Run As account permissions](../automation/manage-runas-account.md#limit-run-as-account-permissions).
 
 Any user who's a member of the Subscription Admins role and coadministrator of the subscription can create a Run As account by following the next section's instructions.
 
@@ -221,11 +222,12 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 
      After you run the script, the Logic App should appear in a resource group, as shown in the following image.
 
-     ![An image of the overview page for an example Azure Logic App.](../media/logic-app.png)
+     ![An image of the overview page for an example Azure Logic App.](media/logic-app.png)
 
 To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Autoscale scheduler and select **Edit** to go to the Logic Apps Designer.
 
-![An image of the Logic Apps Designer. The Recurrence and Webhook menus that let the user edit recurrence times and the webhook file are open.](../media/logic-apps-designer.png)
+//todo need to update the image as the new logic app schedule uses HTTP action
+![An image of the Logic Apps Designer. The Recurrence and Webhook menus that let the user edit recurrence times and the webhook file are open.](media/logic-apps-designer.png)
 
 ## Manage your scaling tool
 
@@ -237,7 +239,8 @@ You can view a summarized status of all runbook jobs or view a more in-depth sta
 
 On the right of your selected Automation account, under "Job Statistics," you can view a list of summaries of all runbook jobs. Opening the **Jobs** page on the left side of the window shows current job statuses, start times, and completion times.
 
-![A screenshot of the job status page.](../media/jobs-status.png)
+//todo need to update the image as the runbook for ARM based scaling tool is different "WVDAutoScaleRunbookARMBased"
+![A screenshot of the job status page.](media/jobs-status.png)
 
 ### View logs and scaling tool output
 
@@ -245,5 +248,6 @@ You can view the logs of scale-out and scale-in operations by opening your runbo
 
 Navigate to the runbook (the default name is WVDAutoScaleRunbook) in your resource group hosting the Azure Automation account and select **Overview**. On the overview page, select a job under Recent Jobs to view its scaling tool output, as shown in the following image.
 
-![An image of the output window for the scaling tool.](../media/tool-output.png)
+//todo need to update the image as the runbook for ARM based scaling tool is different "WVDAutoScaleRunbookARMBased" and output now looks different
+![An image of the output window for the scaling tool.](media/tool-output.png)
 

@@ -255,6 +255,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 
 To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Autoscale scheduler and select **Edit** to go to the Logic Apps Designer.
 
+//todo need to update the image as the new logic app schedule uses HTTP action
 ![An image of the Logic Apps Designer. The Recurrence and Webhook menus that let the user edit recurrence times and the webhook file are open.](../media/logic-apps-designer.png)
 
 ## Manage your scaling tool
@@ -275,5 +276,6 @@ You can view the logs of scale-out and scale-in operations by opening your runbo
 
 Navigate to the runbook (the default name is WVDAutoScaleRunbook) in your resource group hosting the Azure Automation account and select **Overview**. On the overview page, select a job under Recent Jobs to view its scaling tool output, as shown in the following image.
 
+//todo need to update the image as the runbook for ARM based scaling tool is different "WVDAutoScaleRunbookARMBased" and output now looks different
 ![An image of the output window for the scaling tool.](../media/tool-output.png)
 
