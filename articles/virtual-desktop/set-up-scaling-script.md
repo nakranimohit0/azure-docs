@@ -70,7 +70,8 @@ If you have everything ready, then let's get started.
 
 First, you'll need an Azure Automation account to run the PowerShell runbook. Here's how to set up your account:
 
-1. Open Windows PowerShell as an administrator. //todo you don't need to run this as an admin, right ?
+1. Open Windows PowerShell.
+
 2. Run the following cmdlet to sign in to your Azure Account.
 
      ```powershell
@@ -139,7 +140,7 @@ To create a Run As account in your Azure account:
 
 Finally, you'll need to create the Azure Logic App and set up an execution schedule for your new scaling tool. First, download and import the [Desktop Virtualization PowerShell module](powershell-module.md) to use in your PowerShell session if you haven't already.
 
-1.  Open Windows PowerShell as an Administrator. //todo you don't need to run this as an admin, right ?
+1.  Open Windows PowerShell.
 
 2.  Run the following cmdlet to sign in to your Azure Account.
 
