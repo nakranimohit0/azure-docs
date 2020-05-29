@@ -21,7 +21,9 @@ In this article, you'll learn about the scaling tool built with Azure Automation
 
 ## Report issues
 
-Issue reports for the scaling tool are currently being handled on GitHub instead of Microsoft Support. If you encounter any issues with the scaling tool, you can report them by opening a GitHub issue labeled "4a-WVD-scaling-logicapps" on the [RDS GitHub page](https://github.com/Azure/RDS-Templates/issues?q=is%3Aissue+is%3Aopen+label%3A4a-WVD-scaling-logicapps).
+Issue reporting for internal preview of the scaling tool are currently being handled on [this Teams channel](https://teams.microsoft.com/l/channel/19%3ac01e8be08e864fc3808b3472355962bf%40thread.skype/WVD%2520Scaling%2520tool?groupId=e3e92040-a7e6-4096-a5d1-831aeba54943&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
+
+Please report any documentation, errors, warnings and anamolies in above Teams link.
 
 ## How the scaling tool works
 
@@ -40,9 +42,9 @@ During peak usage time, the job checks the current number of sessions and the VM
 >[!NOTE]
 >*SessionThresholdPerCPU* doesn't restrict the number of sessions on the VM. This parameter only determines when new VMs need to be started to load-balance the connections. To restrict the number of sessions, you need to follow the instructions [Set-RdsHostPool](/powershell/module/windowsvirtualdesktop/set-rdshostpool/) to configure the *MaxSessionLimit* parameter accordingly.
 
-During the off-peak usage time, the job determines which session host VMs should shut down based on the *MinimumNumberOfRDSH* parameter. The job will set the session host VMs to drain mode to prevent new sessions connecting to the hosts. If you set the *LimitSecondsToForceLogOffUser* parameter to a non-zero positive value, the job will notify any currently signed in users to save their work, wait the configured amount of time, and then force the users to sign out. Once all user sessions on the session host VM have been signed out, the job will shut down the VM.
+During the off-peak usage time, the job determines how many session host VMs should be shut down based on the *MinimumNumberOfRDSH* parameter. If you set the *LimitSecondsToForceLogOffUser* parameter to a non-zero positive value, the job will notify any currently signed in users to save their work, wait the configured amount of time, and then force the users to sign out. Once all user sessions on the session host VM have been signed out, the job will shut down the VM. The job will set the session host VMs to drain mode to prevent new sessions from connecting to the hosts before the shutdown and reset it back after the shutdown.
 
-If you set the *LimitSecondsToForceLogOffUser* parameter to zero, the job will allow the session configuration setting in specified group policies to handle signing off user sessions. To see these group policies, go to **Computer Configuration** > **Policies** > **Administrative Templates** > **Windows Components** > **Terminal Services** > **Terminal Server** > **Session Time Limits**. If there are any active sessions on a session host VM, the job will leave the session host VM running. If there are no active sessions, the job will shut down the session host VM.
+If you set the *LimitSecondsToForceLogOffUser* parameter to zero, the job will allow the session configuration setting in specified group policies to handle signing off user sessions. To see these group policies, go to **Computer Configuration** > **Policies** > **Administrative Templates** > **Windows Components** > **Terminal Services** > **Terminal Server** > **Session Time Limits**. If there are any active sessions on a session host VM, the job will leave the session host VM running. If there are no active sessions i.e only after all sessions are logged off, the job will shut down the session host VM.
 
 The job runs periodically based on a set recurrence interval. You can change this interval based on the size of your Windows Virtual Desktop environment, but remember that starting and shutting down virtual machines can take some time, so remember to account for the delay. We recommend setting the recurrence interval to every 15 minutes.
 
@@ -50,6 +52,7 @@ However, the tool also has the following limitations:
 
 - This solution applies only to pooled multi-session session host VMs.
 - This solution manages VMs in any region, but can only be used in the same subscription as your Azure Automation account and Azure Logic Apps.
+- Max runtime of a job in the runbook is 3 hours. In case starting/stopping of VMs in a host pool takes longer than that, the job would fail. [More details](../../automation/automation-runbook-execution#fair-share)
 
 >[!NOTE]
 >The scaling tool controls the load balancing mode of the host pool it is scaling. It sets it to breadth-first load balancing for both peak and off-peak hours.
@@ -71,7 +74,7 @@ If you have everything ready, then let's get started.
 
 ## Create an Azure Automation account
 
-First, you'll need an Azure Automation account to run the PowerShell runbook. Here's how to set up your account:
+First, you'll need an Azure Automation account to run the PowerShell runbook. Below procedure is valid even if you have an existing Azure Automation account which you would like to use to setup the powershell runbook. Here's how to set up your account:
 
 1. Open Windows PowerShell.
 
@@ -88,7 +91,7 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. He
 
      ```powershell
      Set-Location -Path "C:\Temp"
-     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzAutoAccount.ps1" # //note: 'master' can be replaced with custom branch if needed
+     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzAutoAccount.ps1"
      Invoke-WebRequest -Uri $Uri -OutFile ".\CreateOrUpdateAzAutoAccount.ps1"
      ```
 
@@ -96,13 +99,13 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. He
 
      ```powershell
      $Params = @{
-          # "AADTenantId"         = "<Azure_Active_Directory_tenant_ID>"   # Optional. If not specified, it will use the current Azure context
+          "AADTenantId"           = "<Azure_Active_Directory_tenant_ID>"   # Optional. If not specified, it will use the current Azure context
           "SubscriptionId"        = "<Azure_subscription_ID>"              # Optional. If not specified, it will use the current Azure context
           "ResourceGroupName"     = "<Resource_group_name>"                # Optional. Default: "WVDAutoScaleResourceGroup"
           "AutomationAccountName" = "<Automation_account_name>"            # Optional. Default: "WVDAutoScaleAutomationAccount"
           "Location"              = "<Azure_region_for_deployment>"        # Optional. Default: "West US2"
-          # "WorkspaceName"       = "<Log_analytics_workspace_name>"       # Optional. If not specified, log analytics workspace will not be used
-          "ArtifactsURI"          = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script" # Optional. Default: "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-scaling-script"
+          "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. If not specified, log analytics workspace will not be used
+          "ArtifactsURI"          = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script"
      }
 
      .\CreateOrUpdateAzAutoAccount.ps1 @Params
@@ -118,7 +121,7 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. He
 
 ## Create an Azure Automation Run As account
 
-Now that you have an Azure Automation account, you'll also need to create an Azure Automation Run As account to access your Azure resources.
+Now that you have an Azure Automation account, you'll also need to create an Azure Automation Run As account if you don't have one for the tool to access your Azure resources.
 
 An [Azure Automation Run As account](../../automation/manage-runas-account.md) provides authentication for managing resources in Azure with the Azure cmdlets. When you create a Run As account, it creates a new service principal user in Azure Active Directory and assigns the Contributor role to the service principal user at the subscription level, the Azure Run As Account is a great way to authenticate securely with certificates and a service principal name without needing to store a username and password in a credential object. To learn more about Run As authentication, see [Limit Run As account permissions](../../automation/manage-runas-account.md#limit-run-as-account-permissions).
 
@@ -172,7 +175,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 
      ```powershell
      Set-Location -Path "C:\Temp"
-     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzLogicApp.ps1" # //note: 'master' can be replaced with custom branch if needed
+     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzLogicApp.ps1"
      Invoke-WebRequest -Uri $Uri -OutFile ".\CreateOrUpdateAzLogicApp.ps1"
      ```
 
@@ -225,12 +228,12 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
           "SubscriptionID"                = $subscriptionId                          # Optional. If not specified, it will use the current Azure context
           "ResourceGroupName"             = $resourceGroupName                       # Optional. Default: "WVDAutoScaleResourceGroup"
           "Location"                      = $location                                # Optional. Default: "West US2"
-          # "RDBrokerURL"                 = "https://rdbroker.wvd.microsoft.com"     # Optional. Default: "https://rdbroker.wvd.microsoft.com"
+          "RDBrokerURL"                   = "https://rdbroker.wvd.microsoft.com"     # Optional. Default: "https://rdbroker.wvd.microsoft.com"
           "TenantGroupName"               = $tenantGroupName                         # Optional. Default: "Default Tenant Group"
           "TenantName"                    = $tenantName
           "HostPoolName"                  = $hostPoolName
-          # "LogAnalyticsWorkspaceId"     = "<Log_analytics_workspace_ID>"           # Optional. If not specified, script will not log to the log analytics workspace
-          # "LogAnalyticsPrimaryKey"      = "<Log_analytics_primary_key>"            # Optional. If not specified, script will not log to the log analytics workspace
+          "LogAnalyticsWorkspaceId"       = "<Log_analytics_workspace_ID>"           # Optional. If not specified, script will not log to the log analytics workspace
+          "LogAnalyticsPrimaryKey"        = "<Log_analytics_primary_key>"            # Optional. If not specified, script will not log to the log analytics workspace
           "ConnectionAssetName"           = $connectionAssetName                     # Optional. Default: "AzureRunAsConnection"
           "RecurrenceInterval"            = $recurrenceInterval                      # Optional. Default: 15
           "BeginPeakTime"                 = $beginPeakTime                           # Optional. Default: "09:00"
@@ -243,7 +246,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
           "LogOffMessageTitle"            = $logOffMessageTitle                      # Optional. Default: "Machine is about to shutdown."
           "LogOffMessageBody"             = $logOffMessageBody                       # Optional. Default: "Your session will be logged off. Please save and close everything."
           "WebhookURI"                    = $WebhookURI
-          "ArtifactsURI"                  = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script" # Optional. Default: "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-scaling-script"
+          "ArtifactsURI"                  = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script"
      }
 
      .\CreateOrUpdateAzLogicApp.ps1 @Params
