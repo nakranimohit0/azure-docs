@@ -150,7 +150,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      Login-AzAccount
      ```
 
-3. Run the following cmdlet to download the createazurelogicapp.ps1 script file on your local machine.
+3. Run the following cmdlet to download the script for creating the Azure Logic App.
 
      ```powershell
      Set-Location -Path "C:\Temp"
