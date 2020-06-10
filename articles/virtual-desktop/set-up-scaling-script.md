@@ -171,9 +171,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $resourceGroupName = $resourceGroup.ResourceGroupName
      $location = $resourceGroup.Location
      
-     $wvdHostpool = Get-AzWvdHostPool | Out-GridView -PassThru -Title "Select the host pool you'd like to scale"
-     $hostPoolName = $wvdHostpool.Name
-     $hostPoolResourceGroupName = (Get-AzResource -ResourceId $wvdHostpool.Id).ResourceGroupName
+     $wvdHostpool = Get-AzResource -ResourceType "Microsoft.DesktopVirtualization/hostpools" | Out-GridView -PassThru -Title "Select the host pool you'd like to scale"
      
      $recurrenceInterval = Read-Host -Prompt "Enter how often you'd like the job to run in minutes, e.g. '15'"
      $beginPeakTime = Read-Host -Prompt "Enter the start time for peak hours in local time, e.g. 9:00"
@@ -199,8 +197,8 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
           "UseARMAPI"                     = $true
           "ResourceGroupName"             = $resourceGroupName                       # Optional. Default: "WVDAutoScaleResourceGroup"
           "Location"                      = $location                                # Optional. Default: "West US2"
-          "HostPoolName"                  = $hostPoolName
-          "HostPoolResourceGroupName"     = $hostPoolResourceGroupName               # Optional. Default: same as ResourceGroupName param value
+          "HostPoolName"                  = $wvdHostpool.Name
+          "HostPoolResourceGroupName"     = $wvdHostpool.ResourceGroupName           # Optional. Default: same as ResourceGroupName param value
           "LogAnalyticsWorkspaceId"       = "<Log_analytics_workspace_ID>"           # Optional. If not specified, script will not log to the log analytics workspace
           "LogAnalyticsPrimaryKey"        = "<Log_analytics_primary_key>"            # Optional. If not specified, script will not log to the log analytics workspace
           "ConnectionAssetName"           = $connectionAssetName                     # Optional. Default: "AzureRunAsConnection"
