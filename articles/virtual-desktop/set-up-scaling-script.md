@@ -69,7 +69,7 @@ The machine you use to deploy the tool must have:
 
 If you have everything ready, then let's get started.
 
-## Create or Update an Azure Automation account
+## Create or update an Azure Automation account
 
 >[!NOTE]
 >If you already have an existing Azure Automation account with a runbook running an older version of the script, you can re-run just this step to update it to latest.

@@ -72,7 +72,10 @@ The machine you use to deploy the tool must have:
 
 If you have everything ready, then let's get started.
 
-## Create an Azure Automation account
+## Create or update an Azure Automation account
+
+>[!NOTE]
+>If you already have an existing Azure Automation account with a runbook running an older version of the script, you can re-run just this step to update it to latest.
 
 First, you'll need an Azure Automation account to run the PowerShell runbook. Below procedure is valid even if you have an existing Azure Automation account which you would like to use to setup the powershell runbook. Here's how to set up your account:
 
