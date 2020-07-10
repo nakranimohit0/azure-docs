@@ -14,7 +14,7 @@ manager: lizross
 
 You can reduce your total Windows Virtual Desktop deployment cost by scaling your virtual machines (VMs). This means shutting down and deallocating session host VMs during off-peak usage hours, then turning them back on and reallocating them during peak hours.
 
-In this article, you'll learn about the scaling tool built with Azure Automation and Azure Logic Apps that will automatically scale session host virtual machines in your Windows Virtual Desktop environment. To learn how to use the scaling tool, skip ahead to [Prerequisites](#prerequisites).
+In this article, you'll learn about the scaling tool built with Azure Automation Account and Azure Logic App that will automatically scale session host VMs in your Windows Virtual Desktop environment. To learn how to use the scaling tool, skip ahead to [Prerequisites](#prerequisites).
 
 ## How the scaling tool works
 
@@ -26,7 +26,7 @@ You can use the scaling tool to:
 - Scale out VMs based on number of sessions per CPU core.
 - Scale in VMs during Off-Peak hours, leaving the minimum number of session host VMs running.
 
-The scaling tool uses a combination of Azure Automation PowerShell runbooks, webhooks, and Azure Logic Apps to function. When the tool runs, Azure Logic Apps calls a webhook to start the Azure Automation runbook. The runbook then creates a job.
+The scaling tool uses a combination of Azure Automation Account, PowerShell runbook, webhook, and Azure Logic App to function. When the tool runs, Azure Logic App calls a webhook to start the Azure Automation runbook. The runbook then creates a job.
 
 During peak usage time, the job checks the current number of sessions and the VM capacity of the current running session host for each host pool. It uses this information to calculate if the running session host VMs can support existing sessions based on the *SessionThresholdPerCPU* parameter defined for the **CreateOrUpdateAzLogicApp.ps1** file. If the session host VMs can't support existing sessions, the job starts additional session host VMs in the host pool.
 
@@ -37,12 +37,12 @@ During the off-peak usage time, the job determines how many session host VMs sho
 
 If you set the *LimitSecondsToForceLogOffUser* parameter to zero, the job will allow the session configuration setting in specified group policies to handle signing off user sessions. To see these group policies, go to **Computer Configuration** > **Policies** > **Administrative Templates** > **Windows Components** > **Remotes Desktop Services** > **Remote Desktop Session Host** > **Session Time Limits GPOs**. If there are any active sessions on a session host VM, the job will leave the session host VM running. If there are no active sessions i.e only after all sessions are logged off, the job will shut down the session host VM.
 
-The job runs periodically based on a set recurrence interval. You can change this interval based on the size of your Windows Virtual Desktop environment, but remember that starting and shutting down virtual machines can take some time, so remember to account for the delay. We recommend setting the recurrence interval to every 15 minutes.
+The job runs periodically based on a set recurrence interval. You can change this interval based on the size of your Windows Virtual Desktop environment, but remember that starting and shutting down VMs can take some time, so remember to account for the delay. We recommend setting the recurrence interval to every 15 minutes.
 
 However, the tool also has the following limitations:
 
 - This solution applies only to pooled multi-session session host VMs.
-- This solution manages VMs in any region, but can only be used in the same subscription as your Azure Automation account and Azure Logic Apps.
+- This solution manages VMs in any region, but can only be used in the same subscription as your Azure Automation Account and Azure Logic App.
 - Max runtime of a job in the runbook is 3 hours. In case starting/stopping of VMs in a host pool takes longer than that, the job would fail. [More details](../automation/automation-runbook-execution.md#fair-share)
 
 >[!NOTE]
@@ -63,16 +63,16 @@ The machine you use to deploy the tool must have:
 
 If you have everything ready, then let's get started.
 
-## Create or update an Azure Automation account
+## Create or update an Azure Automation Account
 
 >[!NOTE]
->If you already have an existing Azure Automation account with a runbook running an older version of the script, you can re-run just this step to update it to latest.
+>If you already have an existing Azure Automation Account with a runbook running an older version of the script, you can re-run just this step to update it to latest.
 
-First, you'll need an Azure Automation account to run the PowerShell runbook. Below procedure is valid even if you have an existing Azure Automation account which you would like to use to setup the powershell runbook. Here's how to set up your account:
+First, you'll need an Azure Automation Account to run the PowerShell runbook. Below procedure is valid even if you have an existing Azure Automation Account which you would like to use to setup the PowerShell runbook. Here's how to set it up:
 
 1. Open Windows PowerShell.
 
-2. Run the following cmdlet to sign in to your Azure Account.
+2. Run the following cmdlet to sign in to your Azure account.
 
      ```powershell
      Login-AzAccount
@@ -81,18 +81,20 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. Be
      >[!NOTE]
      >Your account must have contributor rights on the Azure subscription that you want to deploy the scaling tool on.
 
-3. Run the following cmdlet to download the script for creating the Azure Automation account:
+3. Run the following cmdlet to download the script for creating the Azure Automation Account:
 
      ```powershell
+     New-Item -ItemType Directory -Path "C:\Temp" -Force
      Set-Location -Path "C:\Temp"
-     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzAutoAccount.ps1"
-     Invoke-WebRequest -Uri $Uri -OutFile ".\CreateOrUpdateAzAutoAccount.ps1"
+     $uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzAutoAccount.ps1"
+     # Download the script
+     Invoke-WebRequest -Uri $uri -OutFile ".\CreateOrUpdateAzAutoAccount.ps1"
      ```
 
-4. Run the following cmdlet to execute the script and create the Azure Automation account:
+4. Run the following cmdlet to execute the script and create the Azure Automation Account:
 
      ```powershell
-     $Params = @{
+     $params = @{
           "AADTenantId"           = "<Azure_Active_Directory_tenant_ID>"   # Optional. If not specified, it will use the current Azure context
           "SubscriptionId"        = "<Azure_subscription_ID>"              # Optional. If not specified, it will use the current Azure context
           "UseARMAPI"             = $true
@@ -102,38 +104,38 @@ First, you'll need an Azure Automation account to run the PowerShell runbook. Be
           "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. If not specified, log analytics workspace will not be used
      }
 
-     .\CreateOrUpdateAzAutoAccount.ps1 @Params
+     .\CreateOrUpdateAzAutoAccount.ps1 @params
      ```
 
-5. The cmdlet's output will include a webhook URI. Make sure to keep a record of the URI because you'll use it as a parameter when you set up the execution schedule for the Azure Logic apps.
+5. The cmdlet's output will include a webhook URI. Make sure to keep a record of the URI because you'll use it as a parameter when you set up the execution schedule for the Azure Logic App.
 
-6. After you've set up your Azure Automation account, sign in to your Azure subscription and check to make sure your Azure Automation account and the relevant runbook have appeared in your specified resource group, as shown in the following image:
+6. After you've set up your Azure Automation Account, sign in to your Azure subscription and check to make sure your Azure Automation Account and the relevant runbook have appeared in your specified resource group, as shown in the following image:
 
-![An image of the Azure overview page showing the newly created automation account and runbook.](media/automation-account.png)
+![An image of the Azure overview page showing the newly created Azure Automation Account and runbook.](media/automation-account.png)
 
   To check if your webhook is where it should be, select the name of your runbook. Next, go to your runbook's Resources section and select **Webhooks**.
 
-## Create an Azure Automation Run As account
+## Create an Azure Automation Run As Account
 
-Now that you have an Azure Automation account, you'll also need to create an Azure Automation Run As account if you don't have one for the tool to access your Azure resources.
+Now that you have an Azure Automation Account, you'll also need to create an Azure Automation Run As Account if you don't have one for the tool to access your Azure resources.
 
-An [Azure Automation Run As account](../automation/manage-runas-account.md) provides authentication for managing resources in Azure with the Azure cmdlets. When you create a Run As account, it creates a new service principal user in Azure Active Directory and assigns the Contributor role to the service principal user at the subscription level, the Azure Run As Account is a great way to authenticate securely with certificates and a service principal name without needing to store a username and password in a credential object. To learn more about Run As authentication, see [Limit Run As account permissions](../automation/manage-runas-account.md#limit-run-as-account-permissions).
+An [Azure Automation Run As Account](../automation/manage-runas-account.md) provides authentication for managing resources in Azure with the Azure cmdlets. When you create a Run As Account, it creates a new service principal user in Azure Active Directory and assigns the Contributor role to the service principal user at the subscription level, the Azure Run As Account is a great way to authenticate securely with certificates and a service principal name without needing to store a username and password in a credential object. To learn more about Run As authentication, see [Limit Run As Account permissions](../automation/manage-runas-account.md#limit-run-as-account-permissions).
 
-Any user who's a member of the Subscription Admins role and coadministrator of the subscription can create a Run As account by following the next section's instructions.
+Any user who's a member of the Subscription Admins role and coadministrator of the subscription can create a Run As Account by following the next section's instructions.
 
-To create a Run As account in your Azure account:
+To create a Run As Account in your Azure Automation Account:
 
 1. In the Azure portal, select **All services**. In the list of resources, enter and select **Automation Accounts**.
 
-2. On the **Automation Accounts** page, select the name of your Automation account.
+2. On the **Automation Accounts** page, select the name of your Azure Automation Account.
 
 3. In the pane on the left side of the window, select **Run As Accounts** under the Account Settings section.
 
 4. Select **Azure Run As Account**. When the **Add Azure Run As Account** pane appears, review the overview information, and then select **Create** to start the account creation process.
 
-5. Wait a few minutes for Azure to create the Run As account. You can track the creation progress in the menu under Notifications.
+5. Wait a few minutes for Azure to create the Run As Account. You can track the creation progress in the menu under Notifications.
 
-6. When the process finishes, it will create an asset named AzureRunAsConnection in the specified Automation account.
+6. When the process finishes, it will create an asset named AzureRunAsConnection in the specified Azure Automation Account.
 
 ## Create the Azure Logic App and execution schedule
 
@@ -141,7 +143,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 
 1.  Open Windows PowerShell.
 
-2.  Run the following cmdlet to sign in to your Azure Account.
+2.  Run the following cmdlet to sign in to your Azure account.
 
      ```powershell
      Login-AzAccount
@@ -150,12 +152,14 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 3. Run the following cmdlet to download the script for creating the Azure Logic App.
 
      ```powershell
+     New-Item -ItemType Directory -Path "C:\Temp" -Force
      Set-Location -Path "C:\Temp"
-     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzLogicApp.ps1"
-     Invoke-WebRequest -Uri $Uri -OutFile ".\CreateOrUpdateAzLogicApp.ps1"
+     $uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzLogicApp.ps1"
+     # Download the script
+     Invoke-WebRequest -Uri $uri -OutFile ".\CreateOrUpdateAzLogicApp.ps1"
      ```
 
-4. Run the following PowerShell script to create the Azure Logic app and execution schedule for your host pool (Note: You will need to run this for each of the host pool you want to auto scale).
+4. Run the following PowerShell script to create the Azure Logic App and execution schedule for your host pool (Note: You will need to run this for each of the host pools you want to auto scale, but you need only 1 Azure Automation Account).
 
      ```powershell
      $aadTenantId = (Get-AzContext).Tenant.Id
@@ -180,15 +184,15 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $logOffMessageTitle = Read-Host -Prompt "Enter the title of the message sent to the user before they are forced to sign out"
      $logOffMessageBody = Read-Host -Prompt "Enter the body of the message sent to the user before they are forced to sign out"
      
-     $automationAccount = Get-AzAutomationAccount -ResourceGroupName $resourceGroup.ResourceGroupName | Out-GridView -PassThru -Title "Select the Azure Automation account"
+     $automationAccount = Get-AzAutomationAccount -ResourceGroupName $resourceGroup.ResourceGroupName | Out-GridView -PassThru -Title "Select the Azure Automation Account"
      $automationAccountName = $automationAccount.AutomationAccountName
      $automationAccountConnection = Get-AzAutomationConnection -ResourceGroupName $resourceGroup.ResourceGroupName -AutomationAccountName $automationAccount.AutomationAccountName | Out-GridView -PassThru -Title "Select the Azure RunAs connection asset"
      $connectionAssetName = $automationAccountConnection.Name
      
-     $WebhookURI = Read-Host -Prompt "Enter the URI of the WebHook returned by when you created the Azure Automation Account"
+     $webhookURI = Read-Host -Prompt "Enter the URI of the webhook returned by when you created the Azure Automation Account"
      $maintenanceTagName = Read-Host -Prompt "Enter the name of the Tag associated with VMs you don't want to be managed by this scaling tool"
 
-     $Params = @{
+     $params = @{
           "AADTenantId"                   = $aadTenantId                             # Optional. If not specified, it will use the current Azure context
           "SubscriptionID"                = $subscriptionId                          # Optional. If not specified, it will use the current Azure context
           "UseARMAPI"                     = $true
@@ -209,19 +213,19 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
           "LimitSecondsToForceLogOffUser" = $limitSecondsToForceLogOffUser           # Optional. Default: 1
           "LogOffMessageTitle"            = $logOffMessageTitle                      # Optional. Default: "Machine is about to shutdown."
           "LogOffMessageBody"             = $logOffMessageBody                       # Optional. Default: "Your session will be logged off. Please save and close everything."
-          "WebhookURI"                    = $WebhookURI
+          "WebhookURI"                    = $webhookURI
      }
 
-     .\CreateOrUpdateAzLogicApp.ps1 @Params
+     .\CreateOrUpdateAzLogicApp.ps1 @params
      ```
 
-     After you run the script, the Logic App should appear in a resource group, as shown in the following image.
+     After you run the script, the Azure Logic App should appear in a resource group, as shown in the following image.
 
      ![An image of the overview page for an example Azure Logic App.](media/logic-app.png)
 
-To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Autoscale scheduler and select **Edit** to go to the Logic Apps Designer.
+To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Azure Logic App autoscale scheduler and select **Edit** to go to the Azure Logic App Designer.
 
-![An image of the Logic Apps Designer. The Recurrence and Webhook menus that let the user edit recurrence times and the webhook file are open.](media/logic-apps-designer.png)
+![An image of the Azure Logic App Designer. The Recurrence and webhook menus that let the user edit recurrence times and the webhook file are open.](media/logic-apps-designer.png)
 
 ## Manage your scaling tool
 
@@ -231,15 +235,34 @@ Now that you've created your scaling tool, you can access its output. This secti
 
 You can view a summarized status of all runbook jobs or view a more in-depth status of a specific runbook job in the Azure portal.
 
-On the right of your selected Automation account, under "Job Statistics," you can view a list of summaries of all runbook jobs. Opening the **Jobs** page on the left side of the window shows current job statuses, start times, and completion times.
+On the right of your selected Azure Automation Account, under "Job Statistics," you can view a list of summaries of all runbook jobs. Opening the **Jobs** page on the left side of the window shows current job statuses, start times, and completion times.
 
 ![A screenshot of the job status page.](media/jobs-status.png)
 
 ### View logs and scaling tool output
 
-You can view the logs of scale-out and scale-in operations by opening your runbook and selecting the name of your job.
+You can view the logs of scale-out and scale-in operations by opening your runbook and selecting the job.
 
-Navigate to the runbook (the default name is WVDAutoScaleRunbook) in your resource group hosting the Azure Automation account and select **Overview**. On the overview page, select a job under Recent Jobs to view its scaling tool output, as shown in the following image.
+Navigate to the runbook in your resource group hosting the Azure Automation Account and select **Overview**. On the overview page, select a job under **Recent Jobs** to view its scaling tool output, as shown in the following image.
 
 ![An image of the output window for the scaling tool.](media/tool-output.png)
 
+### Check the version of the runbook script
+
+You can check the version of the runbook script by naviagting to the Azure Automation Account runbook and clicking on **View**. The script will appear from the right side. The version in the form "**v#.#.#**" will be within first few lines of the script. Latest version of the script can be found here //tod add link here
+
+//todo add image
+
+### Reporting issues
+
+When reporting issues, please collect and provide the following information to help troubleshoot the issue
+
+* Complete log from the **All Logs** tab by [navigating to the job](#View-logs-and-scaling-tool-output) that caused an issue. Feel free to mask any sensitive info from the log
+* [Version of the runbook script](#Check-the-version-of-the-runbook-script)
+* Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is ARM based)
+* //todo version of the powershell modules
+* //todo expiry date of the run as acc
+
+### Log Analytics
+
+//todo
