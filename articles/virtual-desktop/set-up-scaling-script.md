@@ -119,7 +119,7 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
 
 Now that you have an Azure Automation Account, you'll also need to create an Azure Automation Run As Account if you don't have one for the tool to access your Azure resources.
 
-An [Azure Automation Run As Account](../automation/manage-runas-account.md) provides authentication for managing resources in Azure with the Azure cmdlets. When you create a Run As Account, it creates a new service principal user in Azure Active Directory and assigns the Contributor role to the service principal user at the subscription level, the Azure Run As Account is a great way to authenticate securely with certificates and a service principal name without needing to store a username and password in a credential object. To learn more about Run As authentication, see [Limit Run As Account permissions](../automation/manage-runas-account.md#limit-run-as-account-permissions).
+An [Azure Automation Run As Account](../automation/manage-runas-account.md) provides authentication for managing resources in Azure with the Azure cmdlets. When you create a Run As Account, it creates a new service principal user in Azure Active Directory and assigns the Contributor role to the service principal user at the subscription level, the Azure Run As Account is a great way to authenticate securely with certificates and a service principal name without needing to store a username and password in a credential object. To learn more about Run As Account authentication, see [Limit Run As Account permissions](../automation/manage-runas-account.md#limit-run-as-account-permissions).
 
 Any user who's a member of the Subscription Admins role and coadministrator of the subscription can create a Run As Account by following the next section's instructions.
 
@@ -135,7 +135,7 @@ To create a Run As Account in your Azure Automation Account:
 
 5. Wait a few minutes for Azure to create the Run As Account. You can track the creation progress in the menu under Notifications.
 
-6. When the process finishes, it will create an asset named AzureRunAsConnection in the specified Azure Automation Account.
+6. When the process finishes, it will create an asset named **AzureRunAsConnection** in the specified Azure Automation Account. The connection asset holds the application ID, tenant ID, subscription ID, and certificate thumbprint.
 
 ## Create the Azure Logic App and execution schedule
 
