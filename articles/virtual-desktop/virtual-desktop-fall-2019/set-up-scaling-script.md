@@ -17,7 +17,7 @@ manager: lizross
 
 You can reduce your total Windows Virtual Desktop deployment cost by scaling your virtual machines (VMs). This means shutting down and deallocating session host VMs during off-peak usage hours, then turning them back on and reallocating them during peak hours.
 
-In this article, you'll learn about the scaling tool built with Azure Automation Account and Azure Logic App that will automatically scale session host VMs in your Windows Virtual Desktop environment. To learn how to use the scaling tool, skip ahead to [Prerequisites](#prerequisites).
+In this article, you'll learn about the scaling tool built with Azure Automation Account and Azure Logic App that will automatically scale session host VMs in your Windows Virtual Desktop environment. To learn how to use the scaling tool, skip ahead to [Prerequisites](#Prerequisites).
 
 ## How the scaling tool works
 
@@ -94,7 +94,7 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
      Invoke-WebRequest -Uri $uri -OutFile ".\CreateOrUpdateAzAutoAccount.ps1"
      ```
 
-4. Run the following cmdlet to execute the script and create the Azure Automation account:
+4. Run the following cmdlet to execute the script and create the Azure Automation Account:
 
      ```powershell
      $params = @{
@@ -151,7 +151,7 @@ Add-RdsAccount -DeploymentUrl "https://rdbroker.wvd.microsoft.com"
 Get-RdsTenant
 ```
 
-When you find the tenant with the host pools you want to scale, follow the instructions in [Create an Azure Automation Account](#create-an-azure-automation-account) to gather the **AzureRunAsConnection** ApplicationID and use the WVD tenant name you got from the previous cmdlet in the following cmdlet to create the role assignment:
+When you find the tenant with the host pools you want to scale, follow the instructions in [Create an Azure Automation Run As Account](#Create-an-Azure-Automation-Run-As-Account) to gather the **AzureRunAsConnection** ApplicationID and use the WVD tenant name you got from the previous cmdlet in the following cmdlet to create the role assignment:
 
 ```powershell
 New-RdsRoleAssignment -RoleDefinitionName "RDS Contributor" -ApplicationId <applicationid> -TenantName <tenantname>
