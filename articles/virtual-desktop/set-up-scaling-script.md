@@ -33,9 +33,14 @@ During peak usage time, the job checks the current number of sessions and the VM
 >[!NOTE]
 >*SessionThresholdPerCPU* doesn't restrict the number of sessions on the VM. This parameter only determines when new VMs need to be started to load-balance the connections. To restrict the number of sessions, you need to follow the instructions [Update-AzWvdHostPool](configure-host-pool-load-balancing.md#configure-breadth-first-load-balancing) to configure the *MaxSessionLimit* parameter accordingly.
 
-During the off-peak usage time, the job determines how many session host VMs should be shut down based on the *MinimumNumberOfRDSH* parameter. If you set the *LimitSecondsToForceLogOffUser* parameter to a non-zero positive value, the job will notify any currently signed in users to save their work, wait the configured amount of time, and then force the users to sign out. Once all user sessions on the session host VM have been signed out, the job will shut down the VM. The job will set the session host VMs to drain mode to prevent new sessions from connecting to the hosts before the shutdown.
+During the off-peak usage time, the job determines how many session host VMs should be shut down based on the *MinimumNumberOfRDSH* parameter. If you set the *LimitSecondsToForceLogOffUser* parameter to a non-zero positive value, the job will set the session host VMs to drain mode to prevent new sessions from connecting to the hosts. It will then notify any currently signed in users to save their work, wait the configured amount of time, and then force the users to sign out. Once all user sessions on the session host VM have been signed out, the job will shut down the VM. After the VM is shut down, the job will reset its session host drain mode.
+
+>[!NOTE]
+>If you manually set the session host VM to drain mode, the session host VM will not be managed by the job. If the session host VM is running and set to drain mode, it will be treated as unavailable and so the job may start additional VMs to handle the load.
 
 If you set the *LimitSecondsToForceLogOffUser* parameter to zero, the job will allow the session configuration setting in specified group policies to handle signing off user sessions. To see these group policies, go to **Computer Configuration** > **Policies** > **Administrative Templates** > **Windows Components** > **Remotes Desktop Services** > **Remote Desktop Session Host** > **Session Time Limits GPOs**. If there are any active sessions on a session host VM, the job will leave the session host VM running. If there are no active sessions i.e only after all sessions are logged off, the job will shut down the session host VM.
+
+During any time, the job also takes host pool's *MaxSessionLimit* into account to determine if the current number of sessions is more than 90% of the maximum capacity. If it is, the job will start additional session host VMs.
 
 The job runs periodically based on a set recurrence interval. You can change this interval based on the size of your Windows Virtual Desktop environment, but remember that starting and shutting down VMs can take some time, so remember to account for the delay. We recommend setting the recurrence interval to every 15 minutes.
 
@@ -129,7 +134,7 @@ To create a Run As Account in your Azure Automation Account:
 
 2. On the **Automation Accounts** page, select the name of your Azure Automation Account.
 
-3. In the pane on the left side of the window, select **Run As Accounts** under the Account Settings section.
+3. In the pane on the left side of the window, select **Run As Accounts** under the **Account Settings** section.
 
 4. Select **Azure Run As Account**. When the **Add Azure Run As Account** pane appears, review the overview information, and then select **Create** to start the account creation process.
 
@@ -191,6 +196,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      
      $webhookURI = Read-Host -Prompt "Enter the URI of the webhook returned by when you created the Azure Automation Account"
      $maintenanceTagName = Read-Host -Prompt "Enter the name of the Tag associated with VMs you don't want to be managed by this scaling tool"
+     //todo prompt for log analytics
 
      $params = @{
           "AADTenantId"                   = $aadTenantId                             # Optional. If not specified, it will use the current Azure context
@@ -249,19 +255,24 @@ Navigate to the runbook in your resource group hosting the Azure Automation Acco
 
 ### Check the version of the runbook script
 
-You can check the version of the runbook script by naviagting to the Azure Automation Account runbook and clicking on **View**. The script will appear from the right side. The version in the form "**v#.#.#**" will be within first few lines of the script. Latest version of the script can be found here //tod add link here
-
-//todo add image
+You can check the version of the runbook script by naviagting to the runbook in your Azure Automation Account and clicking on **View**. The script will appear from the right. The version in the form "**v#.#.#**" will be within first few lines of the script. Latest version of the script can be found [here](https://github.com/Azure/RDS-Templates/blob/master/wvd-templates/wvd-scaling-script/basicScale.ps1#L1) //todo change link
 
 ### Reporting issues
 
 When reporting issues, please collect and provide the following information to help troubleshoot the issue
 
-* Complete log from the **All Logs** tab by [navigating to the job](#View-logs-and-scaling-tool-output) that caused an issue. Feel free to mask any sensitive info from the log
+* Complete log from the **All Logs** tab by [navigating to the job](#View-logs-and-scaling-tool-output) that caused an issue. Feel free to mask any sensitive information from the log
 * [Version of the runbook script](#Check-the-version-of-the-runbook-script)
-* Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is ARM based)
-* //todo version of the powershell modules
-* //todo expiry date of the run as acc
+* Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is //todo remove non- ARM based)
+* Version of each of the following PowerShell modules installed in the Azure Automation Account. To find these modules, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Modules** under **Shared Resources** section. You can search for module by its name
+     - Az.Accounts
+     - Az.Compute
+     - Az.Resources
+     - Az.Automation
+     - OMSIngestionAPI
+     - //todo remove Microsoft.RDInfra.RDPowershell
+     - Az.DesktopVirtualization
+* Expiration of the [Run As Account](#Create-an-Azure-Automation-Run-As-Account). To find this, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Run As Accounts** under **Account Settings** section. You can check when it expires under **Azure Run As Account**
 
 ### Log Analytics
 

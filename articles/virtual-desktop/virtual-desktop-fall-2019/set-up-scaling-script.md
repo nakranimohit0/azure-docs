@@ -131,7 +131,7 @@ To create a Run As Account in your Azure Automation Account:
 
 2. On the **Automation Accounts** page, select the name of your Azure Automation Account.
 
-3. In the pane on the left side of the window, select **Run As Accounts** under the Account Settings section.
+3. In the pane on the left side of the window, select **Run As Accounts** under the **Account Settings** section.
 
 4. Select **Azure Run As Account**. When the **Add Azure Run As Account** pane appears, review the overview information, and then select **Create** to start the account creation process.
 
