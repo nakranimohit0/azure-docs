@@ -106,7 +106,7 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
           "ResourceGroupName"     = "<Resource_group_name>"                # Optional. Default: "WVDAutoScaleResourceGroup"
           "AutomationAccountName" = "<Automation_account_name>"            # Optional. Default: "WVDAutoScaleAutomationAccount"
           "Location"              = "<Azure_region_for_deployment>"        # Optional. Default: "West US2"
-          "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. If not specified, log analytics workspace will not be used
+          "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. //todo To setup Log Analytics Workspace. If not specified, log analytics workspace will not be used by the scaling tool
      }
 
      .\CreateOrUpdateAzAutoAccount.ps1 @params
@@ -196,7 +196,9 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      
      $webhookURI = Read-Host -Prompt "Enter the URI of the webhook returned by when you created the Azure Automation Account"
      $maintenanceTagName = Read-Host -Prompt "Enter the name of the Tag associated with VMs you don't want to be managed by this scaling tool"
+
      //todo prompt for log analytics
+     $logAnalyticsWorkspaceId = Read-Host -Prompt "Enter the Log Analytics Workspace ID to name of the Tag associated with VMs you don't want to be managed by this scaling tool"
 
      $params = @{
           "AADTenantId"                   = $aadTenantId                             # Optional. If not specified, it will use the current Azure context
