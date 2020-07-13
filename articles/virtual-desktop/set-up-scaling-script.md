@@ -309,3 +309,11 @@ If you decided to use Log Analytics, you can view all the log data in a custom l
      | where hostpoolName_s == "<host_pool_name>"
      | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
      ```
+
+- Errors and warnings
+
+     ```Kusto
+     WVDTenantScale_CL
+     | where logmessage_s contains "ERROR:" or logmessage_s contains "WARN:"
+     | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
+     ```
