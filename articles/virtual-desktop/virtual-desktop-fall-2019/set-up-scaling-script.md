@@ -108,7 +108,7 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
           "ResourceGroupName"     = "<Resource_group_name>"                # Optional. Default: "WVDAutoScaleResourceGroup"
           "AutomationAccountName" = "<Automation_account_name>"            # Optional. Default: "WVDAutoScaleAutomationAccount"
           "Location"              = "<Azure_region_for_deployment>"        # Optional. Default: "West US2"
-          "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. If not specified, log analytics workspace will not be used
+          "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. If specified, Log Analytics will be used to configure the custom log table that the runbook PowerShell script can send logs to
      }
 
      .\CreateOrUpdateAzAutoAccount.ps1 @params
@@ -116,11 +116,13 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
 
 5. The cmdlet's output will include a webhook URI. Make sure to keep a record of the URI because you'll use it as a parameter when you set up the execution schedule for the Azure Logic App.
 
-6. After you've set up your Azure Automation Account, sign in to your Azure subscription and check to make sure your Azure Automation Account and the relevant runbook have appeared in your specified resource group, as shown in the following image:
+6. If you specified the parameter **WorkspaceName** for Log Analytics, the cmdlet's output will also include Log Analytics Workspace ID and its Primary Key. Make sure to keep a record of it because you'll use it as a parameter when you set up the execution schedule for the Azure Logic App.
 
-![An image of the Azure overview page showing the newly created Azure Automation Account and runbook.](media/automation-account.png)
+7. After you've set up your Azure Automation Account, sign in to your Azure subscription and check to make sure your Azure Automation Account and the relevant runbook have appeared in your specified resource group, as shown in the following image:
 
-  To check if your webhook is where it should be, select the name of your runbook. Next, go to your runbook's Resources section and select **Webhooks**.
+     ![An image of the Azure overview page showing the newly created Azure Automation Account and runbook.](media/automation-account.png)
+
+     To check if your webhook is where it should be, select the name of your runbook. Next, go to your runbook's Resources section and select **Webhooks**.
 
 ## Create an Azure Automation Run As Account
 
@@ -166,9 +168,9 @@ New-RdsRoleAssignment -RoleDefinitionName "RDS Contributor" -ApplicationId <appl
 
 Finally, you'll need to create the Azure Logic App and set up an execution schedule for your new scaling tool.
 
-1.  Open Windows PowerShell.
+1. Open Windows PowerShell.
 
-2.  Run the following cmdlet to sign in to your Azure account.
+2. Run the following cmdlet to sign in to your Azure account.
 
      ```powershell
      Login-AzAccount
@@ -228,6 +230,9 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $webhookURI = Read-Host -Prompt "Enter the URI of the webhook returned by when you created the Azure Automation Account"
      $maintenanceTagName = Read-Host -Prompt "Enter the name of the Tag associated with VMs you don't want to be managed by this scaling tool"
 
+     $logAnalyticsWorkspaceId = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Workspace ID returned by when you created the Azure Automation Account"
+     $logAnalyticsPrimaryKey = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Primary Key returned by when you created the Azure Automation Account"
+
      $params = @{
           "AADTenantId"                   = $aadTenantId                             # Optional. If not specified, it will use the current Azure context
           "SubscriptionID"                = $subscriptionId                          # Optional. If not specified, it will use the current Azure context
@@ -237,8 +242,8 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
           "TenantGroupName"               = $tenantGroupName                         # Optional. Default: "Default Tenant Group"
           "TenantName"                    = $tenantName
           "HostPoolName"                  = $hostPoolName
-          "LogAnalyticsWorkspaceId"       = "<Log_analytics_workspace_ID>"           # Optional. If not specified, script will not log to the log analytics workspace
-          "LogAnalyticsPrimaryKey"        = "<Log_analytics_primary_key>"            # Optional. If not specified, script will not log to the log analytics workspace
+          "LogAnalyticsWorkspaceId"       = $logAnalyticsWorkspaceId                 # Optional. If not specified, script will not log to the Log Analytics
+          "LogAnalyticsPrimaryKey"        = $logAnalyticsPrimaryKey                  # Optional. If not specified, script will not log to the Log Analytics
           "ConnectionAssetName"           = $connectionAssetName                     # Optional. Default: "AzureRunAsConnection"
           "RecurrenceInterval"            = $recurrenceInterval                      # Optional. Default: 15
           "BeginPeakTime"                 = $beginPeakTime                           # Optional. Default: "09:00"
@@ -260,9 +265,9 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 
      ![An image of the overview page for an example Azure Logic App.](../media/logic-app.png)
 
-To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Azure Logic App autoscale scheduler and select **Edit** to go to the Azure Logic App Designer.
+     To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Azure Logic App autoscale scheduler and select **Edit** to go to the Azure Logic App Designer.
 
-![An image of the Azure Logic App Designer. The Recurrence and webhook menus that let the user edit recurrence times and the webhook file are open.](../media/logic-apps-designer.png)
+     ![An image of the Azure Logic App Designer. The Recurrence and webhook menus that let the user edit recurrence times and the webhook file are open.](../media/logic-apps-designer.png)
 
 ## Manage your scaling tool
 
@@ -283,4 +288,3 @@ You can view the logs of scale-out and scale-in operations by opening your runbo
 Navigate to the runbook in your resource group hosting the Azure Automation Account and select **Overview**. On the overview page, select a job under **Recent Jobs** to view its scaling tool output, as shown in the following image.
 
 ![An image of the output window for the scaling tool.](media/tool-output.png)
-

@@ -106,7 +106,7 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
           "ResourceGroupName"     = "<Resource_group_name>"                # Optional. Default: "WVDAutoScaleResourceGroup"
           "AutomationAccountName" = "<Automation_account_name>"            # Optional. Default: "WVDAutoScaleAutomationAccount"
           "Location"              = "<Azure_region_for_deployment>"        # Optional. Default: "West US2"
-          "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. //todo To setup Log Analytics Workspace. If not specified, log analytics workspace will not be used by the scaling tool
+          "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. If specified, Log Analytics will be used to configure the custom log table that the runbook PowerShell script can send logs to
      }
 
      .\CreateOrUpdateAzAutoAccount.ps1 @params
@@ -114,11 +114,13 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
 
 5. The cmdlet's output will include a webhook URI. Make sure to keep a record of the URI because you'll use it as a parameter when you set up the execution schedule for the Azure Logic App.
 
-6. After you've set up your Azure Automation Account, sign in to your Azure subscription and check to make sure your Azure Automation Account and the relevant runbook have appeared in your specified resource group, as shown in the following image:
+6. If you specified the parameter **WorkspaceName** for Log Analytics, the cmdlet's output will also include Log Analytics Workspace ID and its Primary Key. Make sure to keep a record of it because you'll use it as a parameter when you set up the execution schedule for the Azure Logic App.
 
-![An image of the Azure overview page showing the newly created Azure Automation Account and runbook.](media/automation-account.png)
+7. After you've set up your Azure Automation Account, sign in to your Azure subscription and check to make sure your Azure Automation Account and the relevant runbook have appeared in your specified resource group, as shown in the following image:
 
-  To check if your webhook is where it should be, select the name of your runbook. Next, go to your runbook's Resources section and select **Webhooks**.
+     ![An image of the Azure overview page showing the newly created Azure Automation Account and runbook.](media/automation-account.png)
+
+     To check if your webhook is where it should be, select the name of your runbook. Next, go to your runbook's Resources section and select **Webhooks**.
 
 ## Create an Azure Automation Run As Account
 
@@ -146,9 +148,9 @@ To create a Run As Account in your Azure Automation Account:
 
 Finally, you'll need to create the Azure Logic App and set up an execution schedule for your new scaling tool. First, download and import the [Desktop Virtualization PowerShell module](powershell-module.md) to use in your PowerShell session if you haven't already.
 
-1.  Open Windows PowerShell.
+1. Open Windows PowerShell.
 
-2.  Run the following cmdlet to sign in to your Azure account.
+2. Run the following cmdlet to sign in to your Azure account.
 
      ```powershell
      Login-AzAccount
@@ -197,8 +199,8 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      $webhookURI = Read-Host -Prompt "Enter the URI of the webhook returned by when you created the Azure Automation Account"
      $maintenanceTagName = Read-Host -Prompt "Enter the name of the Tag associated with VMs you don't want to be managed by this scaling tool"
 
-     //todo prompt for log analytics
-     $logAnalyticsWorkspaceId = Read-Host -Prompt "Enter the Log Analytics Workspace ID to name of the Tag associated with VMs you don't want to be managed by this scaling tool"
+     $logAnalyticsWorkspaceId = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Workspace ID returned by when you created the Azure Automation Account"
+     $logAnalyticsPrimaryKey = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Primary Key returned by when you created the Azure Automation Account"
 
      $params = @{
           "AADTenantId"                   = $aadTenantId                             # Optional. If not specified, it will use the current Azure context
@@ -208,8 +210,8 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
           "Location"                      = $location                                # Optional. Default: "West US2"
           "HostPoolName"                  = $wvdHostpool.Name
           "HostPoolResourceGroupName"     = $wvdHostpool.ResourceGroupName           # Optional. Default: same as ResourceGroupName param value
-          "LogAnalyticsWorkspaceId"       = "<Log_analytics_workspace_ID>"           # Optional. If not specified, script will not log to the log analytics workspace
-          "LogAnalyticsPrimaryKey"        = "<Log_analytics_primary_key>"            # Optional. If not specified, script will not log to the log analytics workspace
+          "LogAnalyticsWorkspaceId"       = $logAnalyticsWorkspaceId                 # Optional. If not specified, script will not log to the Log Analytics
+          "LogAnalyticsPrimaryKey"        = $logAnalyticsPrimaryKey                  # Optional. If not specified, script will not log to the Log Analytics
           "ConnectionAssetName"           = $connectionAssetName                     # Optional. Default: "AzureRunAsConnection"
           "RecurrenceInterval"            = $recurrenceInterval                      # Optional. Default: 15
           "BeginPeakTime"                 = $beginPeakTime                           # Optional. Default: "09:00"
@@ -231,9 +233,9 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 
      ![An image of the overview page for an example Azure Logic App.](media/logic-app.png)
 
-To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Azure Logic App autoscale scheduler and select **Edit** to go to the Azure Logic App Designer.
+     To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Azure Logic App autoscale scheduler and select **Edit** to go to the Azure Logic App Designer.
 
-![An image of the Azure Logic App Designer. The Recurrence and webhook menus that let the user edit recurrence times and the webhook file are open.](media/logic-apps-designer.png)
+     ![An image of the Azure Logic App Designer. The Recurrence and webhook menus that let the user edit recurrence times and the webhook file are open.](media/logic-apps-designer.png)
 
 ## Manage your scaling tool
 
@@ -263,10 +265,10 @@ You can check the version of the runbook script by naviagting to the runbook in 
 
 When reporting issues, please collect and provide the following information to help troubleshoot the issue
 
-* Complete log from the **All Logs** tab by [navigating to the job](#View-logs-and-scaling-tool-output) that caused an issue. Feel free to mask any sensitive information from the log
-* [Version of the runbook script](#Check-the-version-of-the-runbook-script)
-* Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is //todo remove non- ARM based)
-* Version of each of the following PowerShell modules installed in the Azure Automation Account. To find these modules, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Modules** under **Shared Resources** section. You can search for module by its name
+- Complete log from the **All Logs** tab by [navigating to the job](#View-logs-and-scaling-tool-output) that caused an issue. Feel free to mask any sensitive information from the log
+- [Version of the runbook script](#Check-the-version-of-the-runbook-script)
+- Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is //todo remove non- ARM based)
+- Version of each of the following PowerShell modules installed in the Azure Automation Account. To find these modules, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Modules** under **Shared Resources** section. You can search for module by its name
      - Az.Accounts
      - Az.Compute
      - Az.Resources
@@ -274,8 +276,36 @@ When reporting issues, please collect and provide the following information to h
      - OMSIngestionAPI
      - //todo remove Microsoft.RDInfra.RDPowershell
      - Az.DesktopVirtualization
-* Expiration of the [Run As Account](#Create-an-Azure-Automation-Run-As-Account). To find this, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Run As Accounts** under **Account Settings** section. You can check when it expires under **Azure Run As Account**
+- Expiration of the [Run As Account](#Create-an-Azure-Automation-Run-As-Account). To find this, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Run As Accounts** under **Account Settings** section. You can check when it expires under **Azure Run As Account**
 
 ### Log Analytics
 
-//todo
+If you decided to use Log Analytics, you can view all the log data in a custom log named **WVDTenantScale_CL** under **Custom Logs** in the **Logs** view of your Log Analytics Workspace. Below are sample queries that you might find helpful
+
+- All logs for a host pool
+
+     ```Kusto
+     WVDTenantScale_CL
+     | where hostpoolName_s == "<host_pool_name>"
+     | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
+     ```
+
+- Total number of session host VMs running and total number of user sessions in a host pool at a point of time
+
+     ```Kusto
+     WVDTenantScale_CL
+     | where logmessage_s contains "Number of running session hosts:"
+          or logmessage_s contains "Number of user sessions:"
+          or logmessage_s contains "Number of user sessions per Core:"
+     | where hostpoolName_s == "<host_pool_name>"
+     | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
+     ```
+
+- Status of all session host VMs in a host pool at a point of time
+
+     ```Kusto
+     WVDTenantScale_CL
+     | where logmessage_s contains "Session host:"
+     | where hostpoolName_s == "<host_pool_name>"
+     | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
+     ```
