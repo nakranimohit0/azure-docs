@@ -42,9 +42,9 @@ During peak usage time, the job checks the current number of sessions and the VM
 >[!NOTE]
 >*SessionThresholdPerCPU* doesn't restrict the number of sessions on the VM. This parameter only determines when new VMs need to be started to load-balance the connections. To restrict the number of sessions, you need to follow the instructions [Set-RdsHostPool](/powershell/module/windowsvirtualdesktop/set-rdshostpool/) to configure the *MaxSessionLimit* parameter accordingly.
 
-During the off-peak usage time, the job determines how many session host VMs should be shut down based on the *MinimumNumberOfRDSH* parameter. If you set the *LimitSecondsToForceLogOffUser* parameter to a non-zero positive value, the job will notify any currently signed in users to save their work, wait the configured amount of time, and then force the users to sign out. Once all user sessions on the session host VM have been signed out, the job will shut down the VM. The job will set the session host VMs to drain mode to prevent new sessions from connecting to the hosts before the shutdown and reset it back after the shutdown.
+During the off-peak usage time, the job determines how many session host VMs should be shut down based on the *MinimumNumberOfRDSH* parameter. If you set the *LimitSecondsToForceLogOffUser* parameter to a non-zero positive value, the job will notify any currently signed in users to save their work, wait the configured amount of time, and then force the users to sign out. Once all user sessions on the session host VM have been signed out, the job will shut down the VM. The job will set the session host VMs to drain mode to prevent new sessions from connecting to the hosts before the shutdown.
 
-If you set the *LimitSecondsToForceLogOffUser* parameter to zero, the job will allow the session configuration setting in specified group policies to handle signing off user sessions. To see these group policies, go to **Computer Configuration** > **Policies** > **Administrative Templates** > **Windows Components** > **Terminal Services** > **Terminal Server** > **Session Time Limits**. If there are any active sessions on a session host VM, the job will leave the session host VM running. If there are no active sessions i.e only after all sessions are logged off, the job will shut down the session host VM.
+If you set the *LimitSecondsToForceLogOffUser* parameter to zero, the job will allow the session configuration setting in specified group policies to handle signing off user sessions. To see these group policies, go to **Computer Configuration** > **Policies** > **Administrative Templates** > **Windows Components** > **Remotes Desktop Services** > **Remote Desktop Session Host** > **Session Time Limits GPOs**. If there are any active sessions on a session host VM, the job will leave the session host VM running. If there are no active sessions i.e only after all sessions are logged off, the job will shut down the session host VM.
 
 The job runs periodically based on a set recurrence interval. You can change this interval based on the size of your Windows Virtual Desktop environment, but remember that starting and shutting down virtual machines can take some time, so remember to account for the delay. We recommend setting the recurrence interval to every 15 minutes.
 
@@ -72,7 +72,10 @@ The machine you use to deploy the tool must have:
 
 If you have everything ready, then let's get started.
 
-## Create an Azure Automation account
+## Create or update an Azure Automation account
+
+>[!NOTE]
+>If you already have an existing Azure Automation account with a runbook running an older version of the script, you can re-run just this step to update it to latest.
 
 First, you'll need an Azure Automation account to run the PowerShell runbook. Below procedure is valid even if you have an existing Azure Automation account which you would like to use to setup the powershell runbook. Here's how to set up your account:
 
@@ -170,7 +173,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      Login-AzAccount
      ```
 
-3. Run the following cmdlet to download the createazurelogicapp.ps1 script file on your local machine.
+3. Run the following cmdlet to download the script for creating the Azure Logic App.
 
      ```powershell
      Set-Location -Path "C:\Temp"
