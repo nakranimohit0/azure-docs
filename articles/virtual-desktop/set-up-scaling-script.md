@@ -253,7 +253,7 @@ Navigate to the runbook in your resource group hosting the Azure Automation Acco
 
 ### Check the version of the runbook script
 
-You can check the version of the runbook script by naviagting to the runbook in your Azure Automation Account and clicking on **View**. The script will appear from the right. The version in the form "**v#.#.#**" will be within first few lines of the script. Latest version of the script can be found [here](https://github.com/Azure/RDS-Templates/blob/master/wvd-templates/wvd-scaling-script/basicScale.ps1#L1) //todo change link
+You can check the version of the runbook script by naviagting to the runbook in your Azure Automation Account and clicking on **View**. The script will appear from the right. The version in the form "**v#.#.#**" will be within first few lines of the script. Latest version of the script can be found [here](https://github.com/Azure/RDS-Templates/blob/wvd_scaling/wvd-templates/wvd-scaling-script/basicScale.ps1#L1)
 
 ### Reporting issues
 
@@ -261,14 +261,13 @@ When reporting issues, please collect and provide the following information to h
 
 - Complete log from the **All Logs** tab by [navigating to the job](#View-logs-and-scaling-tool-output) that caused an issue. Feel free to mask any sensitive information from the log
 - [Version of the runbook script](#Check-the-version-of-the-runbook-script)
-- Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is //todo remove non- ARM based)
+- Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is ARM based)
 - Version of each of the following PowerShell modules installed in the Azure Automation Account. To find these modules, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Modules** under **Shared Resources** section. You can search for module by its name
      - Az.Accounts
      - Az.Compute
      - Az.Resources
      - Az.Automation
      - OMSIngestionAPI
-     - //todo remove Microsoft.RDInfra.RDPowershell
      - Az.DesktopVirtualization
 - Expiration of the [Run As Account](#Create-an-Azure-Automation-Run-As-Account). To find this, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Run As Accounts** under **Account Settings** section. You can check when it expires under **Azure Run As Account**
 

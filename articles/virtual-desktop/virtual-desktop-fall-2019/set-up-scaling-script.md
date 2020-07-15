@@ -279,3 +279,63 @@ You can view the logs of scale-out and scale-in operations by opening your runbo
 Navigate to the runbook in your resource group hosting the Azure Automation Account and select **Overview**. On the overview page, select a job under **Recent Jobs** to view its scaling tool output, as shown in the following image.
 
 ![An image of the output window for the scaling tool.](media/tool-output.png)
+
+### Check the version of the runbook script
+
+You can check the version of the runbook script by naviagting to the runbook in your Azure Automation Account and clicking on **View**. The script will appear from the right. The version in the form "**v#.#.#**" will be within first few lines of the script. Latest version of the script can be found [here](https://github.com/Azure/RDS-Templates/blob/wvd_scaling/wvd-templates/wvd-scaling-script/ARM_based/basicScale.ps1#L1)
+
+### Reporting issues
+
+When reporting issues, please collect and provide the following information to help troubleshoot the issue
+
+- Complete log from the **All Logs** tab by [navigating to the job](#View-logs-and-scaling-tool-output) that caused an issue. Feel free to mask any sensitive information from the log
+- [Version of the runbook script](#Check-the-version-of-the-runbook-script)
+- Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is non-ARM based)
+- Version of each of the following PowerShell modules installed in the Azure Automation Account. To find these modules, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Modules** under **Shared Resources** section. You can search for module by its name
+     - Az.Accounts
+     - Az.Compute
+     - Az.Resources
+     - Az.Automation
+     - OMSIngestionAPI
+     - Microsoft.RDInfra.RDPowershell
+- Expiration of the [Run As Account](#Create-an-Azure-Automation-Run-As-Account). To find this, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Run As Accounts** under **Account Settings** section. You can check when it expires under **Azure Run As Account**
+
+### Log Analytics
+
+If you decided to use Log Analytics, you can view all the log data in a custom log named **WVDTenantScale_CL** under **Custom Logs** in the **Logs** view of your Log Analytics Workspace. Below are sample queries that you might find helpful
+
+- All logs for a host pool
+
+     ```Kusto
+     WVDTenantScale_CL
+     | where hostpoolName_s == "<host_pool_name>"
+     | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
+     ```
+
+- Total number of session host VMs running and total number of user sessions in a host pool at a point of time
+
+     ```Kusto
+     WVDTenantScale_CL
+     | where logmessage_s contains "Number of running session hosts:"
+          or logmessage_s contains "Number of user sessions:"
+          or logmessage_s contains "Number of user sessions per Core:"
+     | where hostpoolName_s == "<host_pool_name>"
+     | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
+     ```
+
+- Status of all session host VMs in a host pool at a point of time
+
+     ```Kusto
+     WVDTenantScale_CL
+     | where logmessage_s contains "Session host:"
+     | where hostpoolName_s == "<host_pool_name>"
+     | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
+     ```
+
+- Errors and warnings
+
+     ```Kusto
+     WVDTenantScale_CL
+     | where logmessage_s contains "ERROR:" or logmessage_s contains "WARN:"
+     | project TimeStampUTC = TimeGenerated, TimeStampLocal = TimeStamp_s, HostPool = hostpoolName_s, LineNumAndMessage = logmessage_s, AADTenantId = TenantId
+     ```
