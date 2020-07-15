@@ -94,15 +94,15 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
      ```powershell
      New-Item -ItemType Directory -Path "C:\Temp" -Force
      Set-Location -Path "C:\Temp"
-     $uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzAutoAccount.ps1"
+     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzAutoAccount.ps1"
      # Download the script
-     Invoke-WebRequest -Uri $uri -OutFile ".\CreateOrUpdateAzAutoAccount.ps1"
+     Invoke-WebRequest -Uri $Uri -OutFile ".\CreateOrUpdateAzAutoAccount.ps1"
      ```
 
 4. Run the following cmdlet to execute the script and create the Azure Automation Account:
 
      ```powershell
-     $params = @{
+     $Params = @{
           "AADTenantId"           = "<Azure_Active_Directory_tenant_ID>"   # Optional. If not specified, it will use the current Azure context
           "SubscriptionId"        = "<Azure_subscription_ID>"              # Optional. If not specified, it will use the current Azure context
           "ResourceGroupName"     = "<Resource_group_name>"                # Optional. Default: "WVDAutoScaleResourceGroup"
@@ -111,7 +111,7 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
           "WorkspaceName"         = "<Log_analytics_workspace_name>"       # Optional. If specified, Log Analytics will be used to configure the custom log table that the runbook PowerShell script can send logs to
      }
 
-     .\CreateOrUpdateAzAutoAccount.ps1 @params
+     .\CreateOrUpdateAzAutoAccount.ps1 @Params
      ```
 
 5. The cmdlet's output will include a webhook URI. Make sure to keep a record of the URI because you'll use it as a parameter when you set up the execution schedule for the Azure Logic App.
@@ -181,9 +181,9 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      ```powershell
      New-Item -ItemType Directory -Path "C:\Temp" -Force
      Set-Location -Path "C:\Temp"
-     $uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzLogicApp.ps1"
+     $Uri = "https://raw.githubusercontent.com/Azure/RDS-Templates/wvd_scaling/wvd-templates/wvd-scaling-script/CreateOrUpdateAzLogicApp.ps1"
      # Download the script
-     Invoke-WebRequest -Uri $uri -OutFile ".\CreateOrUpdateAzLogicApp.ps1"
+     Invoke-WebRequest -Uri $Uri -OutFile ".\CreateOrUpdateAzLogicApp.ps1"
      ```
 
 4. Run the following cmdlet to sign into Windows Virtual Desktop with an account that has RDS Owner or RDS Contributor permissions.
@@ -195,70 +195,61 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 5. Run the following PowerShell script to create the Azure Logic App and execution schedule for your host pool (Note: You will need to run this for each of the host pools you want to auto scale, but you need only 1 Azure Automation Account).
 
      ```powershell
-     $aadTenantId = (Get-AzContext).Tenant.Id
+     $AADTenantId = (Get-AzContext).Tenant.Id
      
-     $azureSubscription = Get-AzSubscription | Out-GridView -PassThru -Title "Select your Azure Subscription"
-     Select-AzSubscription -Subscription $azureSubscription.Id
-     $subscriptionId = $azureSubscription.Id
+     $AzSubscription = Get-AzSubscription | Out-GridView -OutputMode:Single -Title "Select your Azure Subscription"
+     Select-AzSubscription -Subscription $AzSubscription.Id
      
-     $resourceGroup = Get-AzResourceGroup | Out-GridView -PassThru -Title "Select the resource group for the new Azure Logic App"
-     $resourceGroupName = $resourceGroup.ResourceGroupName
-     $location = $resourceGroup.Location
+     $ResourceGroup = Get-AzResourceGroup | Out-GridView -OutputMode:Single -Title "Select the resource group for the new Azure Logic App"
      
-     $wvdTenant = Get-RdsTenant | Out-GridView -PassThru -Title "Select your WVD tenant"
-     $tenantName = $wvdTenant.TenantName
-     $tenantGroupName = $wvdTenant.TenantGroupName
+     $WVDTenant = Get-RdsTenant | Out-GridView -OutputMode:Single -Title "Select your WVD tenant"
      
-     $wvdHostpool = Get-RdsHostPool -TenantName $wvdTenant.TenantName | Out-GridView -PassThru -Title "Select the host pool you'd like to scale"
-     $hostPoolName = $wvdHostpool.HostPoolName
+     $WVDHostPool = Get-RdsHostPool -TenantName $WVDTenant.TenantName | Out-GridView -OutputMode:Single -Title "Select the host pool you'd like to scale"
      
-     $recurrenceInterval = Read-Host -Prompt "Enter how often you'd like the job to run in minutes, e.g. '15'"
-     $beginPeakTime = Read-Host -Prompt "Enter the start time for peak hours in local time, e.g. 9:00"
-     $endPeakTime = Read-Host -Prompt "Enter the end time for peak hours in local time, e.g. 18:00"
-     $timeDifference = Read-Host -Prompt "Enter the time difference between local time and UTC in hours, e.g. +5:30"
-     $sessionThresholdPerCPU = Read-Host -Prompt "Enter the maximum number of sessions per CPU that will be used as a threshold to determine when new session host VMs need to be started during peak hours"
-     $minimumNumberOfRdsh = Read-Host -Prompt "Enter the minimum number of session host VMs to keep running during off-peak hours"
-     $limitSecondsToForceLogOffUser = Read-Host -Prompt "Enter the number of seconds to wait before automatically signing out users. If set to 0, any session host VM that has user sessions, will be left untouched"
-     $logOffMessageTitle = Read-Host -Prompt "Enter the title of the message sent to the user before they are forced to sign out"
-     $logOffMessageBody = Read-Host -Prompt "Enter the body of the message sent to the user before they are forced to sign out"
+     $LogAnalyticsWorkspaceId = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Workspace ID returned by when you created the Azure Automation Account"
+     $LogAnalyticsPrimaryKey = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Primary Key returned by when you created the Azure Automation Account"
+     $RecurrenceInterval = Read-Host -Prompt "Enter how often you'd like the job to run in minutes, e.g. '15'"
+     $BeginPeakTime = Read-Host -Prompt "Enter the start time for peak hours in local time, e.g. 9:00"
+     $EndPeakTime = Read-Host -Prompt "Enter the end time for peak hours in local time, e.g. 18:00"
+     $TimeDifference = Read-Host -Prompt "Enter the time difference between local time and UTC in hours, e.g. +5:30"
+     $SessionThresholdPerCPU = Read-Host -Prompt "Enter the maximum number of sessions per CPU that will be used as a threshold to determine when new session host VMs need to be started during peak hours"
+     $MinimumNumberOfRDSH = Read-Host -Prompt "Enter the minimum number of session host VMs to keep running during off-peak hours"
+     $MaintenanceTagName = Read-Host -Prompt "Enter the name of the Tag associated with VMs you don't want to be managed by this scaling tool"
+     $LimitSecondsToForceLogOffUser = Read-Host -Prompt "Enter the number of seconds to wait before automatically signing out users. If set to 0, any session host VM that has user sessions, will be left untouched"
+     $LogOffMessageTitle = Read-Host -Prompt "Enter the title of the message sent to the user before they are forced to sign out"
+     $LogOffMessageBody = Read-Host -Prompt "Enter the body of the message sent to the user before they are forced to sign out"
      
-     $automationAccount = Get-AzAutomationAccount -ResourceGroupName $resourceGroup.ResourceGroupName | Out-GridView -PassThru -Title "Select the Azure Automation Account"
-     $automationAccountName = $automationAccount.AutomationAccountName
-     $automationAccountConnection = Get-AzAutomationConnection -ResourceGroupName $resourceGroup.ResourceGroupName -AutomationAccountName $automationAccount.AutomationAccountName | Out-GridView -PassThru -Title "Select the Azure RunAs connection asset"
-     $connectionAssetName = $automationAccountConnection.Name
+     $AutoAccount = Get-AzAutomationAccount | Out-GridView -OutputMode:Single -Title "Select the Azure Automation Account"
+     $AutoAccountConnection = Get-AzAutomationConnection -ResourceGroupName $AutoAccount.ResourceGroupName -AutomationAccountName $AutoAccount.AutomationAccountName | Out-GridView -OutputMode:Single -Title "Select the Azure RunAs connection asset"
      
-     $webhookURI = Read-Host -Prompt "Enter the URI of the webhook returned by when you created the Azure Automation Account"
-     $maintenanceTagName = Read-Host -Prompt "Enter the name of the Tag associated with VMs you don't want to be managed by this scaling tool"
+     $WebhookURIAutoVar = Get-AzAutomationVariable -Name 'WebhookURI' -ResourceGroupName $AutoAccount.ResourceGroupName -AutomationAccountName $AutoAccount.AutomationAccountName
 
-     $logAnalyticsWorkspaceId = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Workspace ID returned by when you created the Azure Automation Account"
-     $logAnalyticsPrimaryKey = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Primary Key returned by when you created the Azure Automation Account"
-
-     $params = @{
-          "AADTenantId"                   = $aadTenantId                             # Optional. If not specified, it will use the current Azure context
-          "SubscriptionID"                = $subscriptionId                          # Optional. If not specified, it will use the current Azure context
-          "ResourceGroupName"             = $resourceGroupName                       # Optional. Default: "WVDAutoScaleResourceGroup"
-          "Location"                      = $location                                # Optional. Default: "West US2"
+     $Params = @{
+          "AADTenantId"                   = $AADTenantId                             # Optional. If not specified, it will use the current Azure context
+          "SubscriptionID"                = $AzSubscription.Id                       # Optional. If not specified, it will use the current Azure context
+          "ResourceGroupName"             = $ResourceGroup.ResourceGroupName         # Optional. Default: "WVDAutoScaleResourceGroup"
+          "Location"                      = $ResourceGroup.Location                  # Optional. Default: "West US2"
           "RDBrokerURL"                   = "https://rdbroker.wvd.microsoft.com"     # Optional. Default: "https://rdbroker.wvd.microsoft.com"
-          "TenantGroupName"               = $tenantGroupName                         # Optional. Default: "Default Tenant Group"
-          "TenantName"                    = $tenantName
-          "HostPoolName"                  = $hostPoolName
-          "LogAnalyticsWorkspaceId"       = $logAnalyticsWorkspaceId                 # Optional. If not specified, script will not log to the Log Analytics
-          "LogAnalyticsPrimaryKey"        = $logAnalyticsPrimaryKey                  # Optional. If not specified, script will not log to the Log Analytics
-          "ConnectionAssetName"           = $connectionAssetName                     # Optional. Default: "AzureRunAsConnection"
-          "RecurrenceInterval"            = $recurrenceInterval                      # Optional. Default: 15
-          "BeginPeakTime"                 = $beginPeakTime                           # Optional. Default: "09:00"
-          "EndPeakTime"                   = $endPeakTime                             # Optional. Default: "17:00"
-          "TimeDifference"                = $timeDifference                          # Optional. Default: "-7:00"
-          "SessionThresholdPerCPU"        = $sessionThresholdPerCPU                  # Optional. Default: 1
-          "MinimumNumberOfRDSH"           = $minimumNumberOfRdsh                     # Optional. Default: 1
-          "MaintenanceTagName"            = $maintenanceTagName                      # Optional.
-          "LimitSecondsToForceLogOffUser" = $limitSecondsToForceLogOffUser           # Optional. Default: 1
-          "LogOffMessageTitle"            = $logOffMessageTitle                      # Optional. Default: "Machine is about to shutdown."
-          "LogOffMessageBody"             = $logOffMessageBody                       # Optional. Default: "Your session will be logged off. Please save and close everything."
-          "WebhookURI"                    = $webhookURI
+          "TenantGroupName"               = $WVDTenant.TenantGroupName               # Optional. Default: "Default Tenant Group"
+          "TenantName"                    = $WVDTenant.TenantName
+          "HostPoolName"                  = $WVDHostPool.HostPoolName
+          "LogAnalyticsWorkspaceId"       = $LogAnalyticsWorkspaceId                 # Optional. If not specified, script will not log to the Log Analytics
+          "LogAnalyticsPrimaryKey"        = $LogAnalyticsPrimaryKey                  # Optional. If not specified, script will not log to the Log Analytics
+          "ConnectionAssetName"           = $AutoAccountConnection.Name              # Optional. Default: "AzureRunAsConnection"
+          "RecurrenceInterval"            = $RecurrenceInterval                      # Optional. Default: 15
+          "BeginPeakTime"                 = $BeginPeakTime                           # Optional. Default: "09:00"
+          "EndPeakTime"                   = $EndPeakTime                             # Optional. Default: "17:00"
+          "TimeDifference"                = $TimeDifference                          # Optional. Default: "-7:00"
+          "SessionThresholdPerCPU"        = $SessionThresholdPerCPU                  # Optional. Default: 1
+          "MinimumNumberOfRDSH"           = $MinimumNumberOfRDSH                     # Optional. Default: 1
+          "MaintenanceTagName"            = $MaintenanceTagName                      # Optional.
+          "LimitSecondsToForceLogOffUser" = $LimitSecondsToForceLogOffUser           # Optional. Default: 1
+          "LogOffMessageTitle"            = $LogOffMessageTitle                      # Optional. Default: "Machine is about to shutdown."
+          "LogOffMessageBody"             = $LogOffMessageBody                       # Optional. Default: "Your session will be logged off. Please save and close everything."
+          "WebhookURI"                    = $WebhookURIAutoVar.Value
      }
 
-     .\CreateOrUpdateAzLogicApp.ps1 @params
+     .\CreateOrUpdateAzLogicApp.ps1 @Params
      ```
 
      After you run the script, the Azure Logic App should appear in a resource group, as shown in the following image.
