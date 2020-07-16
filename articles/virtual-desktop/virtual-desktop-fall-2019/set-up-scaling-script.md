@@ -5,7 +5,7 @@ services: virtual-desktop
 author: Heidilohr
 
 ms.service: virtual-desktop
-ms.topic: conceptual
+ms.topic: how-to
 ms.date: 03/30/2020
 ms.author: helohr
 manager: lizross
@@ -24,7 +24,7 @@ In this article, you'll learn about the scaling tool built with Azure Automation
 The scaling tool provides a low-cost automation option for customers who want to optimize their session host VM costs.
 
 You can use the scaling tool to:
- 
+
 - Schedule VMs to start and stop based on Peak and Off-Peak business hours.
 - Scale out VMs based on number of sessions per CPU core.
 - Scale in VMs during Off-Peak hours, leaving the minimum number of session host VMs running.
@@ -64,7 +64,7 @@ Before you start setting up the scaling tool, make sure you have the following t
 - Session host pool VMs configured and registered with the Windows Virtual Desktop service
 - A user with [Contributor access](../../role-based-access-control/role-assignments-portal.md) on Azure subscription
 
-The machine you use to deploy the tool must have: 
+The machine you use to deploy the tool must have:
 
 - Windows PowerShell 5.1 or later
 - The Microsoft Az PowerShell module
@@ -120,7 +120,7 @@ First, you'll need an Azure Automation Account to run the PowerShell runbook. Be
 
 7. After you've set up your Azure Automation Account, sign in to your Azure subscription and check to make sure your Azure Automation Account and the relevant runbook have appeared in your specified resource group, as shown in the following image:
 
-     ![An image of the Azure overview page showing the newly created Azure Automation Account and runbook.](media/automation-account.png)
+     > ![An image of the Azure overview page showing the newly created Azure Automation Account and runbook.](media/automation-account.png)
 
      To check if your webhook is where it should be, select the name of your runbook. Next, go to your runbook's Resources section and select **Webhooks**.
 
@@ -254,11 +254,11 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
 
      After you run the script, the Azure Logic App should appear in a resource group, as shown in the following image.
 
-     ![An image of the overview page for an example Azure Logic App.](../media/logic-app.png)
+     > ![An image of the overview page for an example Azure Logic App.](../media/logic-app.png)
 
      To make changes to the execution schedule, such as changing the recurrence interval or time zone, go to the Azure Logic App autoscale scheduler and select **Edit** to go to the Azure Logic App Designer.
 
-     ![An image of the Azure Logic App Designer. The Recurrence and webhook menus that let the user edit recurrence times and the webhook file are open.](../media/logic-apps-designer.png)
+     > ![An image of the Azure Logic App Designer. The Recurrence and webhook menus that let the user edit recurrence times and the webhook file are open.](../media/logic-apps-designer.png)
 
 ## Manage your scaling tool
 
@@ -270,7 +270,7 @@ You can view a summarized status of all runbook jobs or view a more in-depth sta
 
 On the right of your selected Azure Automation Account, under "Job Statistics," you can view a list of summaries of all runbook jobs. Opening the **Jobs** page on the left side of the window shows current job statuses, start times, and completion times.
 
-![A screenshot of the job status page.](media/jobs-status.png)
+> ![A screenshot of the job status page.](media/jobs-status.png)
 
 ### View logs and scaling tool output
 
@@ -278,7 +278,7 @@ You can view the logs of scale-out and scale-in operations by opening your runbo
 
 Navigate to the runbook in your resource group hosting the Azure Automation Account and select **Overview**. On the overview page, select a job under **Recent Jobs** to view its scaling tool output, as shown in the following image.
 
-![An image of the output window for the scaling tool.](media/tool-output.png)
+> ![An image of the output window for the scaling tool.](media/tool-output.png)
 
 ### Check the version of the runbook script
 
