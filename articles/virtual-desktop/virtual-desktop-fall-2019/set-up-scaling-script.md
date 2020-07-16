@@ -39,7 +39,7 @@ During peak usage time, the job checks the current number of sessions and the VM
 During the off-peak usage time, the job determines how many session host VMs should be shut down based on the *MinimumNumberOfRDSH* parameter. If you set the *LimitSecondsToForceLogOffUser* parameter to a non-zero positive value, the job will set the session host VMs to drain mode to prevent new sessions from connecting to the hosts. It will then notify any currently signed in users to save their work, wait the configured amount of time, and then force the users to sign out. Once all user sessions on the session host VM have been signed out, the job will shut down the VM. After the VM is shut down, the job will reset its session host drain mode.
 
 >[!NOTE]
->If you manually set the session host VM to drain mode, the session host VM will not be managed by the job. If the session host VM is running and set to drain mode, it will be treated as unavailable and so the job may start additional VMs to handle the load. However, in order to prevent the job from managing any session host VMs that need some maintenance, you can set a Tag to those Azure VMs and specify its name as a value to *MaintenanceTagName* parameter when you create Azure Logic App Scheduler later.
+>If you manually set the session host VM to drain mode, the session host VM will not be managed by the job. If the session host VM is running and set to drain mode, it will be treated as unavailable and so the job may start additional VMs to handle the load. Our recommendation to take session host VMs out for any kind of maintenance would be to use a Tag to those Azure VMs before you set it to drain mode. You can specify Tag name as a value to *MaintenanceTagName* parameter when you create Azure Logic App Scheduler later. This will help you distinguish these VMs from the ones being managed by the scaling tool. Setting the maintenance Tag prevents the VM from being managed by scaling tool till the Tag is removed.
 
 If you set the *LimitSecondsToForceLogOffUser* parameter to zero, the job will allow the session configuration setting in specified group policies to handle signing off user sessions. To see these group policies, go to **Computer Configuration** > **Policies** > **Administrative Templates** > **Windows Components** > **Remote Desktop Services** > **Remote Desktop Session Host** > **Session Time Limits**. If there are any active sessions on a session host VM, the job will leave the session host VM running. If there are no active sessions i.e only after all sessions are logged off, the job will shut down the session host VM.
 
@@ -202,8 +202,8 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
      
      $ResourceGroup = Get-AzResourceGroup | Out-GridView -OutputMode:Single -Title "Select the resource group for the new Azure Logic App"
      
+     $RDBrokerURL = (Get-RdsContext).DeploymentUrl
      $WVDTenant = Get-RdsTenant | Out-GridView -OutputMode:Single -Title "Select your WVD tenant"
-     
      $WVDHostPool = Get-RdsHostPool -TenantName $WVDTenant.TenantName | Out-GridView -OutputMode:Single -Title "Select the host pool you'd like to scale"
      
      $LogAnalyticsWorkspaceId = Read-Host -Prompt "If you want to use Log Analytics, enter the Log Analytics Workspace ID returned by when you created the Azure Automation Account"
@@ -229,7 +229,7 @@ Finally, you'll need to create the Azure Logic App and set up an execution sched
           "SubscriptionID"                = $AzSubscription.Id                       # Optional. If not specified, it will use the current Azure context
           "ResourceGroupName"             = $ResourceGroup.ResourceGroupName         # Optional. Default: "WVDAutoScaleResourceGroup"
           "Location"                      = $ResourceGroup.Location                  # Optional. Default: "West US2"
-          "RDBrokerURL"                   = "https://rdbroker.wvd.microsoft.com"     # Optional. Default: "https://rdbroker.wvd.microsoft.com"
+          "RDBrokerURL"                   = $RDBrokerURL                             # Optional. Default: "https://rdbroker.wvd.microsoft.com"
           "TenantGroupName"               = $WVDTenant.TenantGroupName               # Optional. Default: "Default Tenant Group"
           "TenantName"                    = $WVDTenant.TenantName
           "HostPoolName"                  = $WVDHostPool.HostPoolName
@@ -282,7 +282,7 @@ Navigate to the runbook in your resource group hosting the Azure Automation Acco
 
 ### Check the version of the runbook script
 
-You can check the version of the runbook script by naviagting to the runbook in your Azure Automation Account and clicking on **View**. The script will appear from the right. The version in the form "**v#.#.#**" will be within first few lines of the script. Latest version of the script can be found [here](https://github.com/Azure/RDS-Templates/blob/wvd_scaling/wvd-templates/wvd-scaling-script/ARM_based/basicScale.ps1#L1)
+You can check the version of the runbook script by naviagting to the runbook in your Azure Automation Account and clicking on **View**. The script will appear from the right. The version in the form "**v#.#.#**" will be within first few lines of the script under the SYNOPSIS section. Latest version of the script can be found [here](https://github.com/Azure/RDS-Templates/blob/wvd_scaling/wvd-templates/wvd-scaling-script/ARM_based/basicScale.ps1#L1). If you don't see any version in your runbook script, its running a very old version of the script.
 
 ### Reporting issues
 
