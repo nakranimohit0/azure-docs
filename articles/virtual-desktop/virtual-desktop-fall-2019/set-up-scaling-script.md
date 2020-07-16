@@ -282,7 +282,7 @@ Navigate to the runbook in your resource group hosting the Azure Automation Acco
 
 ### Check the version of the runbook script
 
-You can check the version of the runbook script by naviagting to the runbook in your Azure Automation Account and clicking on **View**. The script will appear from the right. The version in the form "**v#.#.#**" will be within first few lines of the script under the SYNOPSIS section. Latest version of the script can be found [here](https://github.com/Azure/RDS-Templates/blob/wvd_scaling/wvd-templates/wvd-scaling-script/ARM_based/basicScale.ps1#L1). If you don't see any version in your runbook script, its running a very old version of the script.
+You can check the version of the runbook script by naviagting to the runbook in your Azure Automation Account and clicking on **View**. The script will appear from the right. The version in the form "**v#.#.#**" will be within first few lines of the script under the SYNOPSIS section. Latest version of the script can be found [here](https://github.com/Azure/RDS-Templates/blob/wvd_scaling/wvd-templates/wvd-scaling-script/basicScale.ps1#L1). If you don't see any version in your runbook script, its running a very old version of the script.
 
 ### Reporting issues
 
@@ -290,7 +290,7 @@ When reporting issues, please collect and provide the following information to h
 
 - Complete log from the **All Logs** tab by [navigating to the job](#View-logs-and-scaling-tool-output) that caused an issue. Feel free to mask any sensitive information from the log
 - [Version of the runbook script](#Check-the-version-of-the-runbook-script)
-- Is the runbook ARM based or non-ARM based ? ARM based runbook name is **WVDAutoScaleRunbookARMBased** and for non-ARM based, it is **WVDAutoScaleRunbook** (This documentation is non-ARM based)
+- Mention that is a non-ARM based runbook
 - Version of each of the following PowerShell modules installed in the Azure Automation Account. To find these modules, navigate to your Azure Automation Account and in the pane on the left side of the window, click on **Modules** under **Shared Resources** section. You can search for module by its name
      - Az.Accounts
      - Az.Compute
