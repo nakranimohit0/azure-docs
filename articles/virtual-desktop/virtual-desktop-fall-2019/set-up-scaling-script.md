@@ -152,17 +152,17 @@ Next, you need to create a role assignment so that **AzureRunAsConnection** can 
 
 First, download and import the [Windows Virtual Desktop PowerShell module](/powershell/windows-virtual-desktop/overview/) to use in your PowerShell session if you haven't already. Run the following PowerShell cmdlets to connect to Windows Virtual Desktop and display your tenants.
 
-    ```powershell
-    Add-RdsAccount -DeploymentUrl "https://rdbroker.wvd.microsoft.com"
-    
-    Get-RdsTenant
-    ```
+```powershell
+Add-RdsAccount -DeploymentUrl "https://rdbroker.wvd.microsoft.com"
+
+Get-RdsTenant
+```
 
 When you find the tenant with the host pools you want to scale, follow the instructions in [Create an Azure Automation Run As Account](#Create-an-Azure-Automation-Run-As-Account) to gather the **AzureRunAsConnection** ApplicationID and use the WVD tenant name you got from the previous cmdlet in the following cmdlet to create the role assignment:
 
-    ```powershell
-    New-RdsRoleAssignment -RoleDefinitionName "RDS Contributor" -ApplicationId "<applicationid>" -TenantName "<tenantname>"
-    ```
+```powershell
+New-RdsRoleAssignment -RoleDefinitionName "RDS Contributor" -ApplicationId "<applicationid>" -TenantName "<tenantname>"
+```
 
 ## Create the Azure Logic App and execution schedule
 
